@@ -1,0 +1,57 @@
+% Editing? Enable word wrap in your editor.
+
+\documentclass{report}
+\usepackage{fullpage}
+\usepackage{a4}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{etoolbox}
+\usepackage{hyperref}
+\usepackage[backend=biber,
+style=numeric,
+citestyle=authoryear]{biblatex}
+\addbibresource{references.bib} 
+
+% Required by OCR
+\newcommand{\candidatename}{Rain}
+\newcommand{\candidatenumber}{0000}
+\newcommand{\centernumber}{000000}
+\newcommand{\centername}{Center Name}
+\newcommand{\qualification}{H446, 2021}
+
+% Apply headers and footers to every page, including chapter pages
+% Required by OCR
+\pagestyle{fancy}
+\setlength{\headheight}{12pt}
+\addtolength{\topmargin}{-11pt}
+\patchcmd{\chapter}{\thispagestyle{plain}}{\thispagestyle{fancy}}{}{}
+\fancyhead[L]{\candidatename}
+\fancyhead[C]{Candidate: \candidatenumber}
+\fancyhead[R]{Center: \centernumber}
+\fancyfoot[L]{\qualification}
+\fancyfoot[C]{}
+\fancyfoot[R]{\thepage}
+
+\renewcommand{\familydefault}{\sfdefault} % serif fonts are an eyesore
+
+\title{Intelligent flashcards}
+\author {
+  \candidatename \\\\
+  Candidate: \candidatenumber \\
+  Center: \centernumber \\
+  \centername \\\\
+  \qualification
+}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\chapter{Introduction}
+\paragraph{}
+Spaced repetition of bite-sized content has been proven to help commit content to memory. Intelligently spacing content apart further increases people's ability to recall information \footcite{OptimumResearchPatternsAndNameLearning}. Flashcards have long been known to be an effective method to memorise content, but actually using them is cumbersome. For one, having to carry a deck at all times is inconvenient; let alone having to constantly sort and move cards around as you become more and less familiar with the content inside. This is a shame, as managing cards intelligently helps to maximise efficiency in retaining information. 
+\paragraph{}
+An online web application can solve both of these issues; most people carry around a device capable of accessing the internet at all times, and algorithms can help to categorise content and signal the optimal time to practice something. This project aims to solve both of these problems.
+
+\printbibliography
+\end{document}
