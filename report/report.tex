@@ -7,10 +7,14 @@
 \usepackage{fancyhdr}
 \usepackage{etoolbox}
 \usepackage{hyperref}
+\usepackage{graphicx}
+
 \usepackage[backend=biber,
 style=numeric,
+natbib=true,
+sorting=none,
 citestyle=authoryear]{biblatex}
-\addbibresource{references.bib} 
+\addbibresource{references.bib}
 
 % Required by OCR
 \newcommand{\candidatename}{Rain}
@@ -51,11 +55,10 @@ citestyle=authoryear]{biblatex}
 \chapter{Analysis}
 \section{The problem}
 \paragraph{}
-Spaced repetition of bite-sized content has been proven to help commit content to memory. Intelligently spacing content apart further increases people's ability to recall information \footcite{OptimumResearchPatternsAndNameLearning}. Flashcards have long been known to be an effective method to memorise content, but actually using them is cumbersome. For one, having to carry a deck at all times is inconvenient; let alone having to constantly sort and move cards around as you become more and less familiar with the content inside. This is a shame, as managing cards intelligently helps to maximise efficiency in retaining information. 
+Spaced repetition of bite-sized content has been proven to help commit content to memory. Intelligently spacing content apart further increases people's ability to recall information \footcite{OptimumRehearsalPatternsAndNameLearning}. Flashcards have long been known to be an effective method to memorise content, but actually using them is cumbersome. For one, having to carry a deck at all times is inconvenient; let alone having to constantly sort and move cards around as you become more and less familiar with the content inside. This is a shame, as managing cards intelligently helps to maximise efficiency in retaining information. 
 
 \paragraph{}
 This problem is a good candidate for solving computationally: most people carry around a device capable of accessing the internet at all times (more than are willing to carry several decks of flashcards!). In addition, algorithms can help to categorise content and signal the optimal time to practice something. This project aims to solve both of these problems through an online web application.
-\paragraph{}
 
 \section{Project details}
 \subsection{Stakeholders}
@@ -64,7 +67,32 @@ This problem is a good candidate for solving computationally: most people carry 
 The main target of this software are students — particularly those at secondary and A-Level. They are the end users, and will make up most interactions. They will use the site to actually learn the content, so it should be intuitive and must meet their needs; the site must effectively help them what they need to learn. Students can be conversed with during or after school hours on most days of the week.
 
 \subsubsection{Teachers}
+\paragraph{}
 Teachers are also important to consult with, even if they might not directly use the software; being teachers, their job is to ensure that content is taught effectively. They have significant experience and training in effective learning methods, so they are a vital resource in ensuring the efficacy of the software. Time with teachers will be much more restricted, especially as the year progresses towards exam season.
+
+\section{The Science}
+\paragraph{}
+% citation required - so far just excerpt from wikipedia
+In the 1970s, Sebastian Leitner proposed a system of reviewing content, called Leitner Boxes. Cards are stored in a series of boxes, with incorrectly answered cards moving to lower boxes and correctly answered cards moving to higher boxes. Cards that the user is proficient in are reviewed less frequently, and those in lower boxes are reviewed more often.
+
+\section{Existing Solutions}
+A few pieces of software have already solved this problem. 
+
+\subsection{Tinycards}
+\paragraph{}
+Duolingo's Tinycards \footcite{Tinycards} (defunct since September 2020), was likely the closest implementation. The user could pick one of already created decks of cards containing material they wanted to study, or create their own. Then, the software would present a range of challenges based on how well the user retained the information. 
+
+\begin{figure}[h!]
+  \includegraphics[width=8cm]{media/tinycards.png}
+  \label{fig:tinycards1}
+  \caption{A screenshot of the desktop user interface for Tinycards. Sourced from \href{https://web.archive.org/web/20211005121604/https://www.pcmag.com/reviews/tinycards-by-duolingo}{PCMag}.}
+\end{figure}
+
+\paragraph{}
+This ranged from simply showing the card and letting the user get to grips with it; matching one side of the card with another card from a line-up; or typing the other side of the card from memory. The site eventually had to shut down due to lack of financial resources, but not before gaining over 1.5 million active monthly users\footcite{TinycardsShutdown}.
+
+
+
 
 \printbibliography
 \end{document}
