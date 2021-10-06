@@ -55,7 +55,7 @@ citestyle=authoryear]{biblatex}
 \chapter{Analysis}
 \section{The problem}
 \paragraph{}
-Spaced repetition of bite-sized content has been proven to help commit content to memory. Intelligently spacing content apart further increases people's ability to recall information \footcite{OptimumRehearsalPatternsAndNameLearning}. Flashcards have long been known to be an effective method to memorise content, but actually using them is cumbersome. For one, having to carry a deck at all times is inconvenient; let alone having to constantly sort and move cards around as you become more and less familiar with the content inside. This is a shame, as managing cards intelligently helps to maximise efficiency in retaining information. 
+Spaced repetition of bite-sized content has been proven to help commit content to memory. Intelligently spacing content apart further increases people's ability to recall information. Flashcards have long been known to be an effective method to memorise content, but actually using them is cumbersome. For one, having to carry a deck at all times is inconvenient; let alone having to constantly sort and move cards around as you become more and less familiar with the content inside. This is a shame, as managing cards intelligently helps to maximise efficiency in retaining information. 
 
 \paragraph{}
 This problem is a good candidate for solving computationally: most people carry around a device capable of accessing the internet at all times (more than are willing to carry several decks of flashcards!). In addition, algorithms can help to categorise content and signal the optimal time to practice something. This project aims to solve both of these problems through an online web application.
@@ -72,15 +72,14 @@ Teachers are also important to consult with, even if they might not directly use
 
 \section{The Science}
 \paragraph{}
-% citation required - so far just excerpt from wikipedia
-In the 1970s, Sebastian Leitner proposed a system of reviewing content, called Leitner Boxes. Cards are stored in a series of boxes, with incorrectly answered cards moving to lower boxes and correctly answered cards moving to higher boxes. Cards that the user is proficient in are reviewed less frequently, and those in lower boxes are reviewed more often.
+By exploiting the psychological spacing effect, people can learn much more efficiently. Humans find it much easier to recall and apply content that has been spaced across several days and shuffled around, compared to content that has been crammed in a single session. Students that learned content across several days in multiple locations were able to recall up to an additional 4 items on average, compared to those who learned the same content on the same day in one location\footcite{ShufflingMathematicsProblems}.
 
 \section{Existing Solutions}
 A few pieces of software have already solved this problem. 
 
 \subsection{Tinycards}
 \paragraph{}
-Duolingo's Tinycards \footcite{Tinycards} (defunct since September 2020), was likely the closest implementation. The user could pick one of already created decks of cards containing material they wanted to study, or create their own. Then, the software would present a range of challenges based on how well the user retained the information. 
+Duolingo's Tinycards \footcite{Tinycards} (defunct since September 2020), was likely the closest implementation to what this project aims to achieve. The user could pick one of already created decks of cards containing material they wanted to study, or create their own. Then, the software would present a range of challenges based on how well the user retained the information. 
 
 \begin{figure}[h!]
   \includegraphics[width=8cm]{media/tinycards.png}
@@ -91,7 +90,7 @@ Duolingo's Tinycards \footcite{Tinycards} (defunct since September 2020), was li
 \paragraph{}
 This ranged from simply showing the card and letting the user get to grips with it; matching one side of the card with another card from a line-up; or typing the other side of the card from memory. The site eventually had to shut down due to lack of financial resources, but not before gaining over 1.5 million active monthly users\footcite{TinycardsShutdown}.
 
-
+\subsection{Quizlet}
 
 
 \printbibliography
