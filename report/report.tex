@@ -232,5 +232,37 @@ Another requested feature was to get real exam practice questions based on the k
   \end{itemize}
 \end{itemize}
 
+\chapter{Design}
+\paragraph{}
+The software can be broken down like so:
+
+\begin{itemize}
+  \item User \begin{itemize}
+    \item Decks \begin{itemize}
+      \item Cards \begin{itemize}
+        \item Front
+        \item Back
+        \item Ability history
+        \item Metadata, e.g. owner, forkable.
+      \end{itemize}
+    \end{itemize}
+    \item Account info \begin{itemize}
+      \item Username
+      \item Password hash
+      \item Session tokens
+    \end{itemize}
+  \end{itemize}
+\end{itemize}
+
+Users have many decks, which can hold many cards. Originally, a NoSQL document-driven database like MongoDB was going to be used, but due to the common request of wanting to share decks, a relational SQL database will be more suitable. A search system could be implemented on cards that users have marked as forkable to allow users to adopt a copy of other decks to their account. This search feature could index cards based on keywords and exam boards.
+
+\paragraph{}
+Storing authorization info allows users to be remembered by the site. Storing the password in hashed form allows the user to be protected in case of database breaches, and salting the hash further prevents the use of rainbow tables.
+
+\paragraph{}
+Exchanging a username and password for a session provides even more security. It ensures that the password does not stick around in the browser. In addition, it allows sessions to be uniquely identified, allowing for easy revocation of lost or inactive devices.
+
+\section{Classes}
+
 \printbibliography
 \end{document}
