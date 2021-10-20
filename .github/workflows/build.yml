@@ -11,7 +11,7 @@ jobs:
         with:
           root_file: report/report.tex
       - name: Upload PDF
-      uses: actions/upload-artifact@v2
-      with:
-        name: Report
-        path: report/report.pdf
+        uses: actions/upload-artifact@v2
+        with:
+          name: Report
+          path: report/report.pdf
