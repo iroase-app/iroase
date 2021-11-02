@@ -274,12 +274,8 @@ Storing authorization info allows users to be remembered by the site. Storing th
 \paragraph{}
 Exchanging a username and password for a session provides even more security. It ensures that the password does not stick around in the browser. In addition, it allows sessions to be uniquely identified, allowing for easy revocation of tokens from lost or inactive devices.
 
-\section{Classes}
-\begin{figure}[h!]
-  \includegraphics[width=\linewidth]{./media/classes.png}
-  \label{fig:classes1}
-  \caption{Class relationship diagram.}
-\end{figure}
+\section{Paradigm and architecture}
+Originally, an object-oriented approach was considered. However, this does not make a lot of sense for this project. To ensure maintainability, scalability, and open up the possibility for development of mobile apps in future, a RESTful design was chosen for the backend. Because of this, each request does not leave behind persistent state in the server memory (i.e. it is stateless). As such, constructing instances of classes for each request just to be destroyed at the end of the request is not a good idea. A functional approach supports this much better.
 
 \printbibliography
 \end{document}
