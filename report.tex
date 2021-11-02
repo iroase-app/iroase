@@ -266,19 +266,23 @@ The software can be broken down like so:
   \end{itemize}
 \end{itemize}
 
-\section{Database design}
-\paragraph{}
-Users have many decks, which can hold many cards. Originally, a NoSQL document-driven database like MongoDB was going to be used, but due to the common request of wanting to share decks, a relational SQL database will be more suitable. A search system could be implemented on cards that users have marked as forkable to allow users to adopt a copy of other decks to their account. This search feature could index cards based on keywords and exam boards.
-
-\paragraph{}
-Storing authorization info allows users to be remembered by the site. Storing the password in hashed form allows the user to be protected in case of database breaches, and salting the hash further prevents the use of rainbow tables.
-
 \section{Paradigm and architecture}
 \paragraph{}
-Originally, an object-oriented approach was considered. However, this does not make a lot of sense for this project. To ensure maintainability, scalability, and open up the possibility for development of mobile apps in future, a RESTful design was chosen for the backend. Because of this, each request does not leave behind persistent state in the server memory (i.e. it is stateless). As such, constructing instances of classes for each request just to be destroyed at the end of the request is not a good idea. A functional approach supports this much better.
+A website allows the software to target the largest amount of devices with the least effort. However, this has the downside of requiring stable internet access, which is not always available.
+
+\paragraph{}
+Originally, an object-oriented approach was considered. However, this does not make a lot of sense for this project. To ensure maintainability, scalability, and open up the possibility for development of mobile apps in future, a RESTful design was chosen for the backend. Because of this, each request does not leave behind persistent state in the server memory (i.e. it is stateless). As such, constructing instances of classes for each request just to be destroyed at the end of the request is not a good idea. A functional approach supports this architecture much better.
 
 \paragraph{}
 The user interface should be divorced from backend logic, similar to a "JAM-stack". This allows it to be deployed to a CDN for low latency globally, reducing hosting costs, and once again keeping the door open for dedicated mobile applications.
+
+
+\section{Database design}
+\paragraph{}
+Users have many decks, which can hold many cards. Originally, a NoSQL document-driven database like MongoDB was going to be used, but due to the common request of wanting to share decks, a relational SQL database will be more suitable. These complex relationships would need multiple transactions in a NoSQL database, while a relational database is much more suitable as it can easily deal with complex, interconnected data in a single transaction. A search system could be implemented on cards that users have marked as forkable to allow users to adopt a copy of other decks to their account. This search feature could index cards based on keywords and exam boards.
+
+\paragraph{}
+Storing authorization info allows users to be remembered by the site. Storing the password in hashed form allows the user to be protected in case of database breaches, and salting the hash further prevents the use of rainbow tables.
 
 \printbibliography
 \end{document}
