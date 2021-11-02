@@ -278,6 +278,13 @@ The user interface should be divorced from backend logic, similar to a "JAM-stac
 
 
 \section{Database design}
+
+\begin{figure}[h!]
+  \includegraphics[width=\linewidth]{./media/db_schema.png}
+  \label{fig:database1}
+  \caption{Database schema. \href{https://drawsql.app/--347/diagrams/iroase}{Click here} to see a scalable diagram.}
+\end{figure}
+
 \paragraph{}
 Users have many decks, which can hold many cards. Originally, a NoSQL document-driven database like MongoDB was going to be used, but due to the common request of wanting to share decks, a relational SQL database will be more suitable. These complex relationships would need multiple transactions in a NoSQL database, while a relational database is much more suitable as it can easily deal with complex, interconnected data in a single transaction. A search system could be implemented on cards that users have marked as forkable to allow users to adopt a copy of other decks to their account. This search feature could index cards based on keywords and exam boards.
 
