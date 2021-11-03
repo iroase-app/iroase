@@ -9,8 +9,6 @@
 \usepackage{hyperref}
 \usepackage{graphicx}
 \usepackage{array,ragged2e,pst-node,pst-dbicons}
-\usepackage{tikz,pgfplots}
-\pgfplotsset{compat=1.17}
 
 \usepackage[backend=biber,
 style=numeric,
@@ -324,10 +322,7 @@ A user signs up through the frontend, which saves their username and a salted ha
 If a user wants to share their deck with other users, they can mark it as public. This allows it to be returned in search results, and for other users to adopt a copy to their account for them to then use in a similar fashion.
 
 \section{Algorithms}
-\subsection{Confidence calculation}
-\paragraph{}
-Similar to Leitner boxes, the software can calculate the ability of a user to remember a card based on the number of times they have seen it, the number of times they have forgotten it, and the number of times they have remembered it.
-
+\subsection{Calculating pull rate}
 \paragraph{}
 Cards that have high fluctuations of confidence are more difficult to remember, and cards that have low fluctuations are easier to remember.
 \paragraph{}
@@ -337,34 +332,93 @@ We can represent this mathematically. $0 < c < 1$ represents the confidence ($c$
 Humans do not remember things linearly, however\footcite{ForgettingCurve}. There is a sharp decline in retention just one day after learning it. This is because it has not been shifted to long term memory. Because of this, a linear equation can't be used to judge the ability of a user to remember a card. 
 
 \paragraph{}
-Suppose we have a user that practices a card once a day for ten days. We can plot an example of how they might remember this card, with confidence ($c$) against time in days passed since first review ($t$).
-
-\begin{center}
-  \begin{tikzpicture}
-    \begin{axis}[scatter/classes={a={mark=o,draw=black}},xlabel=time in days,ylabel=confidence]
-    \addplot[scatter,only marks,scatter src=explicit symbolic]
-    table[meta=label] {
-    x y label
-    0 0.9 a
-    1 0.2 a
-    2 0.4 a
-    3 0.5 a
-    4 0.2 a
-    5 0.4 a
-    6 0.5 a
-    7 0.5 a
-    8 0.6 a
-    9 0.9 a
-    };
-    \end{axis}
-  \end{tikzpicture}
-\end{center}
+Suppose we have a user that practices a card once. We can model how the card might decay in  confidence ($c$) against time in days passed since review ($t$) with this equation:
+\[
+  c = \frac{1}{(t + 1) ^ {2}}
+\]
 
 \paragraph{}
-We need to account for these shifts in ability by pulling poorly remembered cards more often than well remembered cards, while also considering time. If we can delay reviews such that the review happens right before forgetting a card, we can maximise the boost in confidence.
+We need to account for this decay in confidence by pulling poorly remembered cards more often than well remembered cards, while also considering time. If we can delay reviews such that the review happens right before forgetting a card, we can maximise the boost in confidence.
 
 \paragraph{}
-We can define forgetting a card as a sudden decrease in confidence ($\Delta c < -0.5$), or confidence being below a certain threshold ($c < T$).
+We can define forgetting a card as a sudden decrease in confidence at a review ($\Delta c < -0.4$), or number of times confidence  has gone below a certain threshold ($c < 0.01$). This value can be $f$, for the number of times the card has been forgotten.
+
+\paragraph{}
+Bringing this all together, we end up with a way to rank the order the cards should be pulled, with $P$ being the "Pull" value.
+
+\[
+  P = \frac{1}{(t + 1) ^ 2} \cdot \frac{n}{c ^ {-1}} \cdot \frac{1}{f + 1}
+\]
+
+$n$ represents the number of days on which the card has been reviewed.
+
+$t$ represents an amount of time since the card was last reviewed.
+
+$f$ represents the number of times the card has been forgotten.
+
+Cards with a lower value of $P$ should be pulled first.
+
+\paragraph{}
+The $\frac{1}{(t + 1) ^{2}}$ term is used to model memory decay over time, with higher values of $t$ causing reducing the value of $P$.
+
+\paragraph{}
+The $\frac{n}{c ^{-1}}$ term is used to model the ability of the user to remember the card. A higher value of $n$ (more reviews) against a lower value of $c$ (low confidence) significantly decreases the value of $P$, as the card is likely very difficult.
+
+\paragraph{}
+The $\frac{1}{f + 1}$ term is used to model the number of times the card has been forgotten. A higher value of $f$ increases the value of $P$.
+
+\paragraph{}
+More concretely, suppose a user has a card, $A$, that they are very familiar with ($c = 0.85$). They have never forgotten it ($f = 0$), and have been doing reviews on it on ten different days ($n = 10$), with the last review being 30 hours ago ($t = 30$) We can calculate the following:
+
+\[
+  P _ A = \frac{1}{(30 + 1) ^ 2} \cdot \frac{10}{0.85 ^ {-1}} \cdot \frac{1}{0 + 1}
+\]
+
+\[
+  P _ A = \frac{1}{(31) ^ 2} \cdot \frac{10}{0.85 ^ {-1}}
+\]
+
+\[
+  P _ A = \frac{1}{961} \cdot \frac{10}{0.85 ^ {-1}}
+\]
+
+\[
+  P _ A = \frac{17}{1922} = 0.008844953174
+\]
+
+\paragraph{}
+Now suppose a user has a card, $B$ that is very difficult to remember ($c = 0.04$).  They keep forgetting it ($f = 8$), and have been doing reviews on it on ten different days ($n = 10$), with the last review being 60 hours ago ($t = 60$). We can calculate the following:
+
+\[
+  P _ B = \frac{1}{(60 + 1) ^ 2} \cdot \frac{10}{0.04 ^ {-1}} \cdot \frac{1}{8 + 1}
+\]
+
+\[
+  P _ B = \frac{1}{(61) ^ 2} \cdot \frac{10}{0.04 ^ {-1}} \cdot \frac{1}{9}
+\]
+
+\[
+  P _ B = \frac{1}{3721} \cdot \frac{10}{0.04 ^ {-1}} \cdot \frac{1}{9}
+\]
+
+\[
+  P _ B = \frac{2}{167445} = 0.00001194422049
+\]
+
+\[
+  P _ B < P _ A
+\]
+
+As expected, the harder card $B$ results in a lower Pull value, so should be selected first.
+
+\paragraph{}
+If we create a new card, $C$, that has never been reviewed ($t = 0, f = 0, n = 0, c = 0$), we end up with an equation that reduces to this:
+
+\[
+P _ C = \frac{0}{0 ^ {-1}}
+\]
+
+$0 ^ {-1}$ is undefined, so the result of this is undefined. However, we can treat this as a Pull value of $0$ for our purposes, mathematicians be damned. In other words, this card has the highest priority for our algorithm.
 
 \printbibliography
 \end{document}
