@@ -485,7 +485,7 @@ While the software will likely be mainly used by those who speak English, we can
 \subsubsection{Accessibility}
 All text in the interface is at a readable size (14px at minimum), and the contrast ratios for text with this colour scheme pass WCAG AA guidelines. The colours that have been chosen should not pose any confusion for people with colour blindness; this has been verified by putting the screens through a colour-blind simulating filter. Touch targets are at least 48px by 48px in size to make them easy to hit.
 
-\section{Testing}
+\section{Testing strategy}
 \paragraph{}
 A test-driven driven development approach is highly useful. We can designate behaviour that we expect, and then we can iterate solutions very quickly with confidence that the software works as expected. As such, a high quality test suite and plan is essential.
 
@@ -496,6 +496,17 @@ TypeScript significantly reduces the amount of tests that need to be written. Th
 \subsection{API}
 \paragraph{}
 Using Jest, we can write tests that specify expected behaviour and expect certain values. We can mock calls to the database to ensure that we have a consistent database state for each test. Each function should be tested, and each HTTP endpoint should also be simulated by the test library with a range of potential valid and invalid inputs, as would be expected in the real world.
+
+\subsection{End-to-end testing}
+\paragraph{}
+At the end of development, we can emulate how a real user will interact with the app, from sign up to using cards, using a library such as Cypress to simulate a browser.
+
+\paragraph{}
+However, there will still be blind spots in the app that we may have forgotten about. As such, we should give the software to real people and let them use the site, and have them try to break it. There are also some things that need to be tested that simply can't be tested, such as UX. For this, real world usage is vital.
+
+\subsection{Frontend}
+\paragraph{}
+We can use Google's Lighthouse to identify potential accessibility and performance issues. Lighthouse can flag any issues we need to rectify as well as provide metrics to improve on, such as page load time.
 
 \printbibliography
 \end{document}
