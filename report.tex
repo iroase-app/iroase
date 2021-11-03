@@ -473,5 +473,29 @@ The app should be intuitive, casual and approachable, but still have some person
   \caption{An example question screen. A legible, clean sans-serif font with "correct" casing is used on material that is being learned to maximise legibility. Almost nothing else is on-screen, keeping the user focused.}
 \end{figure}
 
+\subsection{Usability}
+\subsubsection{Keyboard input}
+\paragraph{}
+Everything should be accessible via the keyboard. For flipping cards, the user could hit the space bar. For rating cards or picking the correct card from a multiple choice selection, the user should use the number keys for the corresponding item. This makes the interface usable in a highly efficent way, while also being accessible to users who might be blind or lack the motor skills to use a mouse.
+
+\subsubsection{Localisation}
+\paragraph{}
+While the software will likely be mainly used by those who speak English, we can widen the audience globally by allowing multiple languages to be submitted, translating the interface. Translators can submit translations by submitting a pull request for their language to the repository; unfortunately, I can't translate the interface myself to other languages.
+
+\subsubsection{Accessibility}
+All text in the interface is at a readable size (14px at minimum), and the contrast ratios for text with this colour scheme pass WCAG AA guidelines. The colours that have been chosen should not pose any confusion for people with colour blindness; this has been verified by putting the screens through a colour-blind simulating filter. Touch targets are at least 48px by 48px in size to make them easy to hit.
+
+\section{Testing}
+\paragraph{}
+A test-driven driven development approach is highly useful. We can designate behaviour that we expect, and then we can iterate solutions very quickly with confidence that the software works as expected. As such, a high quality test suite and plan is essential.
+
+\subsection{TypeScript}
+\paragraph{}
+TypeScript significantly reduces the amount of tests that need to be written. The TypeScript compiler will detect type issues at compile time, unlike JavaScript, where you are silently left with undefined values at runtime. This means that we don't need to test for functions take the right input; we can use TypeScript's type system to do this for us.
+
+\subsection{API}
+\paragraph{}
+Using Jest, we can write tests that specify expected behaviour and expect certain values. We can mock calls to the database to ensure that we have a consistent database state for each test. Each function should be tested, and each HTTP endpoint should also be simulated by the test library with a range of potential valid and invalid inputs, as would be expected in the real world.
+
 \printbibliography
 \end{document}
