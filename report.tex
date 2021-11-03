@@ -359,13 +359,13 @@ $f$ represents the number of times the card has been forgotten.
 Cards with a lower value of $P$ should be pulled first.
 
 \paragraph{}
-The $\frac{1}{(t + 1) ^{2}}$ term is used to model memory decay over time, with higher values of $t$ causing reducing the value of $P$.
+The $\frac{1}{(t + 1) ^{2}}$ term is used to model memory decay over time, with higher values of $t$ reducing the value of $P$.
 
 \paragraph{}
 The $\frac{n}{c ^{-1}}$ term is used to model the ability of the user to remember the card. A higher value of $n$ (more reviews) against a lower value of $c$ (low confidence) significantly decreases the value of $P$, as the card is likely very difficult.
 
 \paragraph{}
-The $\frac{1}{f + 1}$ term is used to model the number of times the card has been forgotten. A higher value of $f$ increases the value of $P$.
+The $\frac{1}{f + 1}$ term is used to model the number of times the card has been forgotten. A lower value of $f$ increases the value of $P$.
 
 \paragraph{}
 More concretely, suppose a user has a card, $A$, that they are very familiar with ($c = 0.85$). They have never forgotten it ($f = 0$), and have been doing reviews on it on ten different days ($n = 10$), with the last review being 30 hours ago ($t = 30$) We can calculate the following:
