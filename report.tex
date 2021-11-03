@@ -341,7 +341,7 @@ Suppose we have a user that practices a card once. We can model how the card mig
 We need to account for this decay in confidence by pulling poorly remembered cards more often than well remembered cards, while also considering time. If we can delay reviews such that the review happens right before forgetting a card, we can maximise the boost in confidence.
 
 \paragraph{}
-We can define forgetting a card as a sudden decrease in confidence at a review ($\Delta c < -0.4$), or number of times confidence  has gone below a certain threshold ($c < 0.01$). This value can be $f$, for the number of times the card has been forgotten.
+We can define forgetting a card as a sudden decrease in confidence at a review ($\Delta c < -0.4$), or number of times confidence  has gone below a certain threshold ($c < 0.15$). This value can be $f$, for the number of times the card has been forgotten.
 
 \paragraph{}
 Bringing this all together, we end up with a way to rank the order the cards should be pulled, with $P$ being the "Pull" value.
@@ -418,7 +418,24 @@ If we create a new card, $C$, that has never been reviewed ($t = 0, f = 0, n = 0
 P _ C = \frac{0}{0 ^ {-1}}
 \]
 
-$0 ^ {-1}$ is undefined, so the result of this is undefined. However, we can treat this as a Pull value of $0$ for our purposes, mathematicians be damned. In other words, this card has the highest priority for our algorithm.
+$0 ^ {-1}$ is undefined, so the result of this is undefined. However, we can treat this as a Pull value of $0$ for our purposes, mathematicians be damned. In other words, this card has the highest priority for our algorithm. In the event of a tie because of this rule, we simply choose a random card from the tied cards.
+
+\subsection{Calculating confidence}
+\paragraph{}
+Now that we have a way to determine the Pull value of a card, we can start to decide what kind of challenges to serve the user once the card has been pulled. These challenges consider the confidence level of the card. 
+
+\subsubsection{Confidence thresholds}
+\paragraph{}
+$0 < c < \frac{1}{3}$ is a low confidence card, so we serve a "challenge" that simply asks the user to review the card and rate it. We update the confidence accordingly based on if the user finds the card easy, medium, or hard.
+
+\paragraph{}
+$\frac{1}{3} < c < \frac{2}{3}$ is a medium confidence card, so we serve a challenge that asks the user to pick out the other side of the card from a selection of multiple possibilities. Based on how long it takes the user to select the correct card, we update the confidence value, with faster response times meaning higher confidence.
+
+\paragraph{}
+$\frac{2}{3} < c < 1$ is a high confidence card, so we serve a challenge that asks them to type out the other side of the card from memory. If correct, confidence increases and if incorrect, confidence decreases.
+
+\paragraph{}
+Using these thresholds, we can have a variety of challenge types that scale to the user's ability.
 
 \printbibliography
 \end{document}
