@@ -437,5 +437,26 @@ $\frac{2}{3} < c < 1$ is a high confidence card, so we serve a challenge that as
 \paragraph{}
 Using these thresholds, we can have a variety of challenge types that scale to the user's ability.
 
+\subsection{Captcha}
+\paragraph{}
+In order to protect against bots, we can require access to certain API endpoints (e.g. registration, sign in, reporting items) require a captcha to be solved. However, traditional captchas result in poor UX and are difficult to solve for able-bodied, able-minded users (let alone those with disabilities), yet are becoming quite easy to solve for advanced bots.
+
+\paragraph{}
+We can use an invisible, proof-of-work captcha to solve this problem. Proof of work challenges don't aim to separate bots from humans but instead exist to increase the amount of computational effort it takes to submit a request to the point where it is not worth sending automated requests.
+
+\paragraph{}
+Similar to proof of work algorithms used by some cryptocurrencies, we can send a challenge that requires the client machine to brute-force a hash with a desired property, such as a certain amount of leading zeros in the binary digest of the hash.
+
+\paragraph{}
+Implementations of this kind of challenge already exist and are being used somewhat commonly on the internet. The most prolific example is \href{https://friendlycaptcha.com/}{FriendlyCaptcha}.
+
+\paragraph{}
+We can generate a challenge (such as a random string) on the server and send it to the client. The client would then use a hashing algorithm to repeatedly hash the challenge prepended with its own generated string until it finds a hash that meets the desired property, e.g. starting with 10 zeros. The client then sends the generated string that resulted in the passing hash to the server alongside its request to whatever endpoint the client is trying to access. The server verifies if the solution is correct: if it is, the server services the request.
+
+\paragraph{}
+The benefits to this approach are significant compared to a traditional text transcription or image labelling task like Google's reCAPTCHA. For one, reCAPTCHA is very expensive at 1 USD per 1,000 requests. In addition, Google uses reCAPTCHA to track users across the internet, so there are privacy implications for using reCAPTCHA. Further, reCAPTCHA has already been broken with \href{https://2captcha.com/}{services that exist allowing you to pay for a human to solve the challenge for you}. The greatest upside, however, is the complete elimination of friction from legitimate users.
+
+\section{Frontend}
+
 \printbibliography
 \end{document}
