@@ -457,6 +457,21 @@ We can generate a challenge (such as a random string) on the server and send it 
 The benefits to this approach are significant compared to a traditional text transcription or image labelling task like Google's reCAPTCHA. For one, reCAPTCHA is very expensive at 1 USD per 1,000 requests. In addition, Google uses reCAPTCHA to track users across the internet, so there are privacy implications for using reCAPTCHA. Further, reCAPTCHA has already been broken with \href{https://2captcha.com/}{services that exist allowing you to pay for a human to solve the challenge for you}. The greatest upside, however, is the complete elimination of friction from legitimate users.
 
 \section{Frontend}
+\subsection{Styles, feel and branding.}
+\paragraph{}
+The app should be intuitive, casual and approachable, but still have some personality. A quirky yet casual feeling style was chosen to help users feel like they are "at home". Some mock-up UI screens were created with Figma:
+
+\begin{figure}[h!]
+  \includegraphics[width=\linewidth]{./media/ui/home.png}
+  \label{fig:home1}
+  \caption{The home screen. Text is intentionally lowercase to feel casual; as if the user were typing to friends. A warm colour scheme and a quirky font further makes the site feel less like a sterile textbook. UI components like the navigation bar and cards are as minimal as possible, with further context being revealed on hover. The most important component (daily review) is the largest and separated with a line to hint to the user that is the most important. A streak is shown to motivate the user to practice every day, similar to some social media apps using streaks to encourage daily activity.}
+\end{figure}
+
+\begin{figure}[h!]
+  \includegraphics[width=\linewidth]{./media/ui/textbox.png}
+  \label{fig:question1}
+  \caption{An example question screen. A legible, clean sans-serif font with "correct" casing is used on material that is being learned to maximise legibility. Almost nothing else is on-screen, keeping the user focused.}
+\end{figure}
 
 \printbibliography
 \end{document}
