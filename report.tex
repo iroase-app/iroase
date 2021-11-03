@@ -266,6 +266,9 @@ The software can be broken down like so:
   \end{itemize}
 \end{itemize}
 
+\paragraph{}
+Everything is tied to each user. The user can create their own decks and cards, and share them with other users. Each deck can be tagged with a subject or topic, allowing for easy searching if they choose to make these decks public.
+
 \section{Paradigm and architecture}
 \paragraph{}
 A website allows the software to target the largest amount of devices with the least effort. However, this has the downside of requiring stable internet access, which is not always available.
@@ -275,7 +278,6 @@ Originally, an object-oriented approach was considered. However, this does not m
 
 \paragraph{}
 The user interface should be divorced from backend logic, similar to a "JAM-stack". This allows it to be deployed to a CDN for low latency globally, reducing hosting costs, and once again keeping the door open for dedicated mobile applications.
-
 
 \section{Database design}
 
@@ -290,6 +292,18 @@ Users have many decks, which can hold many cards. Originally, a NoSQL document-d
 
 \paragraph{}
 Storing authorization info allows users to be remembered by the site. Storing the password in hashed form allows the user to be protected in case of database breaches, and salting the hash further prevents the use of rainbow tables.
+
+\paragraph{}
+Reports need to be saved to keep the site safe from spam or harmful content. These reports can then be reviewed by a moderator.
+
+\paragraph{}
+CardEvent is used to track the user's ability to remember cards. This can then be used to calculate how well a user knows a card.
+
+\paragraph{}
+Notifications are stored in the database, so the user can be told about important events such as a card they have reported has being checked by a moderator.
+
+\section{Data flow}
+\paragraph{}
 
 \printbibliography
 \end{document}
