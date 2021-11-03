@@ -244,6 +244,18 @@ The site is public with anyone being able to submit public cards. There needs to
   \end{itemize} 
 \end{itemize}
 
+\section{Success criteria}
+\subsection{Backend}
+\paragraph{}
+The backend should satisfy all the requirements listed above. Furthermore, it should be secure against common exploits such as SQL injection to prevent leaking or destruction of user data. The backend should be able to run on any server machine in a portable manner, allowing for easy deployment and self-hosting, should users choose to do so. The backend should be thoroughly tested, perhaps using an automated testing engine. We can generate code coverage reports from our testing engine to view the effectiveness of our tests.
+
+\subsection{Frontend}
+\paragraph{}
+The frontend should be responsive to many viewport sizes, be accessible, load quickly on slow connections and stay performant even on lower end hardware, as might be typical on a student's device. We can generate scores for these metrics using Google's Lighthouse, a web auditing tool that reports on important metrics that affect perceived and actual performance, as well as highlighting any accessibility issues. Lighthouse was chosen as it is an industry standard testing tool, and the Google search engine considers Lighthouse scores when ranking pages in its search results. At a minimum, we should strive for a score of 90 or higher in every category.
+
+\paragraph{}
+We can also end-to-end test the user interface using both automated means to iron out any bugs, and with users to locate any UX issues. We can measure this by having in person tests with users of the target demographic (13-21 year olds) and seeing how they interact with the software, measuring time it takes to do certain tasks and asking them to describe their experience and any pain points with the software.
+
 \chapter{Design}
 \paragraph{}
 The software can be broken down like so:
