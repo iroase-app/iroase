@@ -9,6 +9,8 @@
 \usepackage{hyperref}
 \usepackage{graphicx}
 \usepackage{array,ragged2e,pst-node,pst-dbicons}
+\usepackage{tikz,pgfplots}
+\pgfplotsset{compat=1.17}
 
 \usepackage[backend=biber,
 style=numeric,
@@ -314,8 +316,55 @@ CardEvent is used to track the user's ability to remember cards. This can then b
 \paragraph{}
 Notifications are stored in the database, so the user can be told about important events such as a card they have reported has being checked by a moderator.
 
-\section{Data flow}
+\subsection{Data flow}
 \paragraph{}
+A user signs up through the frontend, which saves their username and a salted hash of their password into the Users table. A user can then create a deck, which creates a deck in the Decks table, with a reference to their deck in UserDecks. They can then create cards, which creates cards in the Cards table, with a reference to their deck in UserDecks. Cards can be created, with a reference to their deck in DeckCards. Once a user begins using their decks, the software can then calculate the ability of the user to remember each card and store it in the database based on a "confidence" score and a date. Storing this information allows for an algorithm similar to Leitner boxes to be used to serve cards at optimal intervals. This cycle of reviewing cards repeatedly makes up the core functionality of the software.
+
+\paragraph{}
+If a user wants to share their deck with other users, they can mark it as public. This allows it to be returned in search results, and for other users to adopt a copy to their account for them to then use in a similar fashion.
+
+\section{Algorithms}
+\subsection{Confidence calculation}
+\paragraph{}
+Similar to Leitner boxes, the software can calculate the ability of a user to remember a card based on the number of times they have seen it, the number of times they have forgotten it, and the number of times they have remembered it.
+
+\paragraph{}
+Cards that have high fluctuations of confidence are more difficult to remember, and cards that have low fluctuations are easier to remember.
+\paragraph{}
+We can represent this mathematically. $0 < c < 1$ represents the confidence ($c$) of the card, where $c = 0$ means the card is completely forgotten, and $c = 1$ means the card is completely remembered. 
+
+\paragraph{}
+Humans do not remember things linearly, however\footcite{ForgettingCurve}. There is a sharp decline in retention just one day after learning it. This is because it has not been shifted to long term memory. Because of this, a linear equation can't be used to judge the ability of a user to remember a card. 
+
+\paragraph{}
+Suppose we have a user that practices a card once a day for ten days. We can plot an example of how they might remember this card, with confidence ($c$) against time in days passed since first review ($t$).
+
+\begin{center}
+  \begin{tikzpicture}
+    \begin{axis}[scatter/classes={a={mark=o,draw=black}},xlabel=time in days,ylabel=confidence]
+    \addplot[scatter,only marks,scatter src=explicit symbolic]
+    table[meta=label] {
+    x y label
+    0 0.9 a
+    1 0.2 a
+    2 0.4 a
+    3 0.5 a
+    4 0.2 a
+    5 0.4 a
+    6 0.5 a
+    7 0.5 a
+    8 0.6 a
+    9 0.9 a
+    };
+    \end{axis}
+  \end{tikzpicture}
+\end{center}
+
+\paragraph{}
+We need to account for these shifts in ability by pulling poorly remembered cards more often than well remembered cards, while also considering time. If we can delay reviews such that the review happens right before forgetting a card, we can maximise the boost in confidence.
+
+\paragraph{}
+We can define forgetting a card as a sudden decrease in confidence ($\Delta c < -0.5$), or confidence being below a certain threshold ($c < T$).
 
 \printbibliography
 \end{document}
