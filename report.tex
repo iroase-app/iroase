@@ -456,6 +456,20 @@ We can generate a challenge (such as a random string) on the server and send it 
 \paragraph{}
 The benefits to this approach are significant compared to a traditional text transcription or image labelling task like Google's reCAPTCHA. For one, reCAPTCHA is very expensive at 1 USD per 1,000 requests. In addition, Google uses reCAPTCHA to track users across the internet, so there are privacy implications for using reCAPTCHA. Further, reCAPTCHA has already been broken with \href{https://2captcha.com/}{services that exist allowing you to pay for a human to solve the challenge for you}. The greatest upside, however, is the complete elimination of friction from legitimate users.
 
+\subsection{Authentication}
+Log in and sign up needs to be protected by a captcha.
+
+\subsubsection{Sign up}
+\paragraph{}
+On sign up, users are asked to send a username they want alongside their password to the server. First, it must check that the username is valid (alphanumeric and within a certain length constraint). If it is valid, the server then checks the database to see if the username is already taken. If it isn't taken, we hash their password with a salt, create a new entry in the Users table with their username, hashed password, salt, the current time. We create a session token and then send the token to the client. If the username is invalid or has already been taken, we send an error back to the client.
+
+\subsubsection{Login}
+\paragraph{}
+On sign up, users enter their username and password. This is sent to the server, which retrieves the hash and salt from the database. We hash the password with the salt and then compare the hash to the stored hash. If they match, the password is correct and we can create a session to send to the client. If either the username or the password is incorrect, we send an error to the client stating that the username or password is incorrect.
+
+\subsection{Sessions}
+Session tokens are symmetrical on the client and the server. The session token should be sent in Authorization header on almost every request. If the token is invalid or missing, we return a 401 Unauthorized.
+
 \section{Frontend}
 \subsection{Styles, feel and branding.}
 \paragraph{}
