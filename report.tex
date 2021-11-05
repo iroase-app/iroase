@@ -9,6 +9,11 @@
 \usepackage{hyperref}
 \usepackage{graphicx}
 \usepackage{array,ragged2e,pst-node,pst-dbicons}
+\usepackage{mdframed}
+\usepackage{minted}
+\usemintedstyle{monokai}
+\BeforeBeginEnvironment{minted}{\begin{mdframed}[backgroundcolor=black!90]}
+\AfterEndEnvironment{minted}{\end{mdframed}}
 
 \usepackage[backend=biber,
 style=numeric,
@@ -521,6 +526,37 @@ However, there will still be blind spots in the app that we may have forgotten a
 \subsection{Frontend}
 \paragraph{}
 We can use Google's Lighthouse to identify potential accessibility and performance issues. Lighthouse can flag any issues we need to rectify as well as provide metrics to improve on, such as page load time. We can also simulate a browser using Cypress to test if each component works as expected. However, this also needs to be tested manually by users as not every user action be anticipated.
+
+\chapter{Development}
+For the sake of brevity, only the minimum to demonstrate the "idea" of the code is shown in this document. The source code for this project can be viewed \href{https://github.com/iroase-app}{on GitHub, inside the orginsation "iroase-app"} under the BSD-3-Clause license.
+
+\section{Backend}
+\paragraph{}
+Our stack for the backend is TypeScript, running inside Node, which stores data in a PostgreSQL database. An agile, test-driven development approach is used, with our tests written using \href{https://jestjs.io}{Jest}.
+
+\subsection{Registration}
+\subsubsection{Test cases}
+
+\begin{minted}[linenos]{typescript}
+// Excerpt from ./src/__test__/register.test.ts
+import app from '../app';
+describe('/register', () => {
+  it('accepts a username and a password and sends back token', async () => {
+    const res = await supertest(app)
+      .post('/register')
+      .send({
+        username: 'Fo0bar',
+        password: 'secure password',
+      });
+    expect(res.body).toHaveProperty('session');
+    expect(res.body.username).toEqual('foobar');
+    expect(res.statusCode).toEqual(201);
+  });
+  // The full test suite can be found in the repository in the listed file.
+});
+
+\end{minted}
+
 
 \printbibliography
 \end{document}
