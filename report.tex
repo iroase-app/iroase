@@ -534,10 +534,35 @@ For the sake of brevity, only the minimum to demonstrate the "idea" of the code 
 \paragraph{}
 Our stack for the backend is TypeScript, running inside Node, which stores data in a PostgreSQL database. An agile, test-driven development approach is used, with our tests written using \href{https://jestjs.io}{Jest}.
 
+\subsection{Database setup}
+The following SQL commands set up our user and session tables in PostgreSQL as according to \hyperref[fig:database1]{our schema}.
+
+\begin{minted}[breaklines, linenos]{sql}
+  CREATE TABLE iroase.users (
+    "_id" serial NOT NULL,
+    username varchar NOT NULL,
+    hashed_password varchar NOT NULL,
+    created timestamp NOT NULL,
+    is_moderator boolean NOT NULL DEFAULT false,
+    CONSTRAINT users_pk PRIMARY KEY ("_id"),
+    CONSTRAINT users_un UNIQUE (username)
+  );
+
+  CREATE TABLE iroase.sessions (
+    "_id" serial NOT NULL,
+    "token" varchar NOT NULL,
+    device varchar NOT NULL,
+    created timestamp NOT NULL,
+    CONSTRAINT sessions_pk PRIMARY KEY ("_id"),
+    CONSTRAINT "user" FOREIGN KEY ("_id") REFERENCES iroase.users("_id")
+  );
+  
+\end{minted}
+
 \subsection{Registration}
 \subsubsection{Test cases}
 
-\begin{minted}[linenos]{typescript}
+\begin{minted}[breaklines, linenos]{typescript}
 // Excerpt from ./src/__test__/register.test.ts
 import app from '../app';
 describe('/register', () => {
@@ -554,9 +579,33 @@ describe('/register', () => {
   });
   // The full test suite can be found in the repository in the listed file.
 });
-
 \end{minted}
 
+\paragraph{}
+The server should reject the request if either the "username" or "password" field is missing; the username contains illegal characters; or the username or password is too long or short. "supertest" is a library that makes it easy to emulate a request to an Express web server. The test suite emulates several requests to "/register", and then expects certain responses based on the input it gave the server. This is a black-box test, as it is not aware of any internal logic, only the inputs it sends and the output it gets from the server.
+
+\subsubsection{Implementation}
+
+\begin{minted}[breaklines, linenos]{typescript}
+// Excerpt from ./src/api/register/register.ts
+register.post('/', (req, res) => {
+  if (!(req.body.username && req.body.password)) res.status(400).send({ error: 'fieldMissing' });
+  if (!(req.body.username as string).match(/^[A-Za-z0-9]*$/g)) res.status(400).send({ error: 'illegalCharacters' });
+  if (req.body.username.length > 24) res.status(400).send({ error: 'usernameTooLong' });
+  if (req.body.username.length < 3) res.status(400).send({ error: 'usernameTooShort' });
+  if (req.body.password.length > 128) res.status(400).send({ error: 'passwordTooLong' });
+  if (req.body.password.length < 8) res.status(400).send({ error: 'passwordTooShort' });
+});
+\end{minted}
+
+\paragraph{}
+We've now checked that the input we get from client requests is what we expect it to be, and then reject any requests that aren't allowed. We can verify this by running our test suite:
+
+\begin{figure}[h!]
+  \includegraphics[width=\linewidth]{./media/development/backend/tests/register/input_validity.png}
+  \label{fig:registerValid1}
+  \caption{Tests for verifying user input is valid. The relevant tests pass.}
+\end{figure}
 
 \printbibliography
 \end{document}
