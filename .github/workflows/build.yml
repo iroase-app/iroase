@@ -10,6 +10,7 @@ jobs:
         uses: xu-cheng/latex-action@v2
         with:
           root_file: report.tex
+          args: -shell-escape -pdf -file-line-error -halt-on-error -interaction=nonstopmode
       - name: Upload PDF
         uses: actions/upload-artifact@v2
         with:
