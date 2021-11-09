@@ -7,7 +7,8 @@
 \usepackage{fancyhdr}
 \usepackage{etoolbox}
 \usepackage{hyperref}
-\usepackage{graphicx}
+\usepackage{graphicx,float}
+\usepackage{subfig}
 \usepackage{array,ragged2e,pst-node,pst-dbicons}
 \usepackage{mdframed}
 \usepackage{minted}
@@ -54,6 +55,7 @@ citestyle=authoryear]{biblatex}
 }
 
 \begin{document}
+\raggedbottom
 \maketitle
 \setcounter{page}{2}
 \tableofcontents
@@ -478,18 +480,28 @@ Session tokens are symmetrical on the client and the server. The session token s
 \section{Frontend}
 \subsection{Styles, feel and branding}
 \paragraph{}
-The app should be intuitive, casual and approachable, but still have some personality. A quirky yet casual feeling style was chosen to help users feel like they are "at home". Some mock-up UI screens were created with Figma:
+The app should be intuitive, casual and approachable, but still have some personality. A quirky yet casual feeling style was chosen to help users feel like they are "at home". Mock-up UI screens were created with Figma, and some are in the figures below. See \href{https://www.figma.com/file/7vs7errfunZKlr1wT6j52Z/faded}{this Figma sketch} for scalable versions of all the screens.
 
-\begin{figure}[h!]
-  \includegraphics[width=\linewidth]{./media/ui/home.png}
+\begin{figure}[H]
+  \centering
+  \subfloat{\includegraphics[height=4.2cm]{./media/ui/home.png}}
+  \subfloat{\includegraphics[height=4.2cm]{./media/ui/home_dark.png}}
   \label{fig:home1}
-  \caption{The home screen. Text is intentionally lowercase to feel casual; as if the user were typing to friends. A warm colour scheme and a quirky font further makes the site feel less like a sterile textbook. UI components like the navigation bar and cards are as minimal as possible, with further context being revealed on hover. The most important component (daily review) is the largest and separated with a line to hint to the user that is the most important. A streak is shown to motivate the user to practice every day, similar to some social media apps using streaks to encourage daily activity.}
+  \caption{The home screen. Text is intentionally lowercase to feel casual; as if the user were typing to friends. A warm colour scheme and a quirky font further makes the site feel less like a sterile textbook. UI components like the navigation bar and cards are as minimal as possible, with further context being revealed on hover. The most important component (daily review) is the largest and separated with a line to hint to the user that is the most important. A streak is shown to motivate the user to practice every day, similar to some social media apps using streaks to encourage daily activity. Dark theme is also available for comfortable reading in low light conditions.}
+\end{figure}
+\begin{figure}[H]
+  \centering
+  \subfloat{\includegraphics[height=4.2cm]{./media/ui/textbox.png}}
+  \subfloat{\includegraphics[height=4.2cm]{./media/ui/review.png}}
+  \label{fig:question1}
+  \caption{Example question screens. A legible, clean sans-serif font with "correct" casing is used on material that is being learned to maximise legibility. Almost nothing else is on-screen, keeping the user focused.}
 \end{figure}
 
-\begin{figure}[h!]
-  \includegraphics[width=\linewidth]{./media/ui/textbox.png}
-  \label{fig:question1}
-  \caption{An example question screen. A legible, clean sans-serif font with "correct" casing is used on material that is being learned to maximise legibility. Almost nothing else is on-screen, keeping the user focused.}
+\begin{figure}[H]
+  \centering
+  \includegraphics[height=16cm]{./media/ui/deck.png}
+  \label{fig:editor1}
+  \caption{The deck editor. Settings are below the page fold, with a scroll hint telling the user to scroll for settings. They can mark their deck as public, optionally set the course that the deck is related to, or delete the deck. There is a wireframe of the exam paper next to the course box, to assist them in locating the course code.}
 \end{figure}
 
 \subsection{Usability}
