@@ -534,6 +534,7 @@ Our stack for the backend is TypeScript, running inside Node, which stores data 
 The following SQL commands set up our user and session tables in PostgreSQL as according to \hyperref[fig:database1]{our schema}.
 
 \begin{minted}[breaklines, linenos]{sql}
+  CREATE DATABASE iroase
   CREATE TABLE iroase.users (
     "_id" serial NOT NULL,
     username varchar NOT NULL,
@@ -578,29 +579,62 @@ describe('/register', () => {
 \end{minted}
 
 \paragraph{}
-The server should reject the request if either the "username" or "password" field is missing; the username contains illegal characters; or the username or password is too long or short. "supertest" is a library that makes it easy to emulate a request to an Express web server. The test suite emulates several requests to "/register", and then expects certain responses based on the input it gave the server. This is a black-box test, as it is not aware of any internal logic, only the inputs it sends and the output it gets from the server.
+The server should reject the request if either the "username" or "password" field is missing; the username contains illegal characters; or the username or password is too long or short. "supertest" is a library that makes it easy to emulate a request to an Express web server. The test suite emulates several requests to "/register", and then expects certain responses based on the input it gave the server.
 
 \subsubsection{Implementation}
 
 \begin{minted}[breaklines, linenos]{typescript}
 // Excerpt from ./src/api/register/register.ts
-register.post('/', (req, res) => {
-  if (!(req.body.username && req.body.password)) res.status(400).send({ error: 'fieldMissing' });
-  if (!(req.body.username as string).match(/^[A-Za-z0-9]*$/g)) res.status(400).send({ error: 'illegalCharacters' });
-  if (req.body.username.length > 24) res.status(400).send({ error: 'usernameTooLong' });
-  if (req.body.username.length < 3) res.status(400).send({ error: 'usernameTooShort' });
-  if (req.body.password.length > 128) res.status(400).send({ error: 'passwordTooLong' });
-  if (req.body.password.length < 8) res.status(400).send({ error: 'passwordTooShort' });
+register.post('/', async (req, res) => {
+  if (!(req.body.username.length && req.body.password.length)) res.status(400).send({ error: 'fieldMissing' });
+  else if (!req.body.username.match(/^[A-Za-z0-9]*$/g)) res.status(400).send({ error: 'illegalCharacters' });
+  else if (req.body.username.length > 24) res.status(400).send({ error: 'usernameTooLong' });
+  else if (req.body.username.length < 3) res.status(400).send({ error: 'usernameTooShort' });
+  else if (req.body.password.length > 128) res.status(400).send({ error: 'passwordTooLong' });
+  else if (req.body.password.length < 8) res.status(400).send({ error: 'passwordTooShort' });
+  else {
+    const client = await db.connect();
+    try {
+      await client.query('BEGIN');
+      const user = await client.query(`
+      INSERT INTO users (username, hashed_password, created, is_moderator) 
+      VALUES ($1, $2, $3, $4) 
+      RETURNING user_id;
+      `,
+      [req.body.username, await argon2.hash(req.body.password), new Date(), false]);
+
+      const token = (await randomBytesP(64)).toString('hex');
+      await client.query(`
+      INSERT INTO sessions ("user_id", "token", device, created)
+      VALUES ($1, $2, $3, $4);
+      `,
+      [user.rows[0].user_id, token, `${req.useragent?.os}: ${req.useragent?.browser}`, new Date()]);
+
+      await client.query('COMMIT');
+
+      res.status(201).send({ session: token, username: req.body.username });
+    } catch (e) {
+      if (e instanceof DatabaseError && e.code === '23505') res.status(409).send({ error: 'usernameCollision' });
+      else {
+        res.status(500).send({ error: 'internalError' });
+        console.error(`DB failure!! \n${e}`);
+      }
+      await client.query('ROLLBACK');
+    } finally {
+      client.release();
+    }
+  }
 });
+
 \end{minted}
 
 \paragraph{}
-We've now checked that the input we get from client requests is what we expect it to be, and then reject any requests that aren't allowed. We can verify this by running our test suite:
+We've now checked that the input we get from client requests is what we expect it to be, and then reject any requests that aren't allowed. Next, we attempt to store the user in the database. If the database rejects the operation, we check to see if it was due to a username collision. If so, we notify the client. Finally, for good requests, we send back a session token. We can verify this by running our test suite:
 
 \begin{figure}[h!]
-  \includegraphics[width=\linewidth]{./media/development/backend/tests/register/input_validity.png}
+  \includegraphics[width=\linewidth]{./media/development/backend/tests/register/pass.png}
   \label{fig:registerValid1}
-  \caption{Tests for verifying user input is valid. The relevant tests pass.}
+  \caption{The tests for our registration endpoint pass!}
 \end{figure}
 
 \printbibliography
