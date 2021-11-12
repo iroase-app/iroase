@@ -534,24 +534,25 @@ Our stack for the backend is TypeScript, running inside Node, which stores data 
 The following SQL commands set up our user and session tables in PostgreSQL as according to \hyperref[fig:database1]{our schema}.
 
 \begin{minted}[breaklines, linenos]{sql}
-  CREATE DATABASE iroase
-  CREATE TABLE iroase.users (
-    "_id" serial NOT NULL,
+  CREATE TABLE IF NOT EXISTS users (
+    "user_id" INT GENERATED ALWAYS AS IDENTITY,
     username varchar NOT NULL,
     hashed_password varchar NOT NULL,
     created timestamp NOT NULL,
     is_moderator boolean NOT NULL DEFAULT false,
-    CONSTRAINT users_pk PRIMARY KEY ("_id"),
+    CONSTRAINT users_pk PRIMARY KEY ("user_id"),
     CONSTRAINT users_un UNIQUE (username)
   );
 
-  CREATE TABLE iroase.sessions (
-    "_id" serial NOT NULL,
+  CREATE TABLE IF NOT EXISTS sessions (
+    "session_id" INT GENERATED ALWAYS AS IDENTITY,
     "token" varchar NOT NULL,
     device varchar NOT NULL,
     created timestamp NOT NULL,
-    CONSTRAINT sessions_pk PRIMARY KEY ("_id"),
-    CONSTRAINT "user" FOREIGN KEY ("_id") REFERENCES iroase.users("_id")
+    "user_id" INT NOT NULL,
+    CONSTRAINT sessions_pk PRIMARY KEY ("session_id"),
+    CONSTRAINT "user_id" FOREIGN KEY ("user_id") REFERENCES users("user_id") ON DELETE CASCADE
+  );
   );
   
 \end{minted}
@@ -635,6 +636,16 @@ We've now checked that the input we get from client requests is what we expect i
   \includegraphics[width=\linewidth]{./media/development/backend/tests/register/pass.png}
   \label{fig:registerValid1}
   \caption{The tests for our registration endpoint pass!}
+\end{figure}
+
+\subsection{Making our tests and app containerised}
+\paragraph{}
+Before we go any further, it's probably wise to make sure that our app and tests run portably. Right now, the test suite (and deployment!) relies on a brittle, manual setup of a database running on the local machine. We can automate our tests and deploys in a reproducible way using Docker. Our \href{https://github.com/iroase-app/server/blob/main/Dockerfile}{Dockerfile} sets out how we should build the Docker image for our server, and our \href{https://github.com/iroase-app/server/blob/main/docker-compose.test.yml}{docker-compose} files show how the image should be deployed alongside a database.
+
+\begin{figure}[H]
+  \includegraphics[width=\linewidth]{./media/development/backend/tests/docker/pass.png}
+  \label{fig:tests2}
+  \caption{We can now run our tests in a continuous integration (CI) environment! Here, the tests are running in GitHub Actions against a clean database.}
 \end{figure}
 
 \printbibliography
