@@ -816,5 +816,29 @@ whoami.get('/', (req, res) => {
 });
 \end{minted}
 
+\subsection{Logout}
+\paragraph{}
+We can now log out by deleting the session. Our test checks to see that the correct row is removed from the database.
+
+\begin{minted}[linenos, breaklines]{typescript}
+// Excerpt from ./src/__test__/session/delete.test.ts
+describe('logging out', () => {
+  it('should delete a session', async () => {
+    const res = await supertest(loader)
+      .delete('/app/session')
+      .set('Authorization', 'Bearer testToken')
+      .send();
+
+    expect(res.status).toBe(204);
+    const sessions = await db.default.query(`
+    SELECT * FROM sessions WHERE "token" = $1;
+    `,
+    ['testToken']);
+    expect(sessions.rowCount).toBe(0);
+  });
+});
+\end{minted}
+
+
 \printbibliography
 \end{document}
