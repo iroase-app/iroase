@@ -581,11 +581,16 @@ describe('/register', () => {
 The server should reject the request if either the "username" or "password" field is missing; the username contains illegal characters; or the username or password is too long or short. "supertest" is a library that makes it easy to emulate a request to an Express web server. The test suite emulates several requests to "/register", and then expects certain responses based on the input it gave the server.
 
 \subsubsection{Implementation}
-
+We can use this middleware to make sure the username and password are what we want.
 \begin{minted}[breaklines, linenos]{typescript}
 // Excerpt from ./src/api/_common/auth/validate.ts
 import { Request, Response } from 'express';
 
+/**
+ * Check if the password is valid
+ * @param username The username to check
+ * @returns `true` if the password is valid, otherwise an error message as `string`.
+ */
 function user(username: string): string | true {
   if (!username.match(/^[A-Za-z0-9]*$/g)) return 'illegalCharacters';
   if (username.length > 24) return 'usernameTooLong';
@@ -593,24 +598,37 @@ function user(username: string): string | true {
   return true;
 }
 
+/**
+ * Check if the password is valid
+ * @param password The password to check
+ * @returns `true` if the password is valid, otherwise an error message as `string`.
+ */
 function pass(password: string): string | true {
   if (password.length > 128) return 'passwordTooLong';
   if (password.length < 8) return 'passwordTooShort';
   return true;
 }
 
+/**
+ * Express middleware to validate the username and password
+ * @param req The request object
+ * @param res The response object
+ * @param next Callback to run next
+ */
 export default function validate(req: Request, res: Response, next: Function) {
   if (!(req.body.username.length && req.body.password.length)) res.status(400).send({ error: 'fieldMissing' });
+  else {
+    const u = user(req.body.username);
+    const p = pass(req.body.password);
 
-  const u = user(req.body.username);
-  const p = pass(req.body.password);
-
-  if (u !== true) {
-    res.status(400).send({ error: u });
-  } else if (p !== true) {
-    res.status(400).send({ error: p });
-  } else next();
+    if (u !== true) {
+      res.status(400).send({ error: u });
+    } else if (p !== true) {
+      res.status(400).send({ error: p });
+    } else { next(); }
+  }
 }
+
 \end{minted}
 
 \paragraph{}
@@ -671,6 +689,46 @@ Before we go any further, it's probably wise to make sure that our app and tests
   \caption{We can now run our tests in a continuous integration (CI) environment! Here, the tests are running in GitHub Actions against a clean database. Our software runs on any machine that has Docker installed.}
 \end{figure}
 
-\subsection{Sign in and sign out}
+\subsection{Login and logout}
+\subsubsection{Login}
+\paragraph{}
+Now that users can sign up, we need to allow them to sign in by exchanging a username and password for a session token. We can re-use the validation middleware we wrote earlier. A test suite has been written for the login endpoint that simulates a correct request and a variety of invalid requests. The test suite can be viewed \href{https://github.com/iroase-app/server/tree/main/src/__test__/login.test.ts}{in the repository here}.
+
+\begin{minted}[linenos, breaklines]{typescript}
+// Excerpt from ./src/api/login/login.ts
+login.post('/', validate, async (req, res) => {
+  const user = await db.query(
+    'SELECT user_id, hashed_password FROM users WHERE username = $1;',
+    [req.body.username],
+  );
+  if (!user.rows[0]) {
+    /*
+      * If the user doesn't exist, we don't want to leak information.
+      * We pretend that the user exists but the password is wrong.
+      * We hash a dummy string for consistent execution time.
+    */
+    await argon2.hash('very real password');
+    return res.status(400).send({ error: 'wrongCredentials' });
+  }
+
+  const isValid = await argon2.verify(user.rows[0].hashed_password, req.body.password);
+  if (isValid) {
+    const token = (await randomBytesP(64)).toString('hex');
+    await db.query(`
+          INSERT INTO sessions ("user_id", "token", device, created)
+          VALUES ($1, $2, $3, $4);
+          `,
+    [user.rows[0].user_id, token, `${req.useragent?.os}: ${req.useragent?.browser}`, new Date()]);
+    return res.send({ session: token, username: req.body.username });
+  }
+  return res.status(400).send({ error: 'wrongCredentials' });
+});
+\end{minted}
+
+If a user doesn't exist, we hash a dummy string to ensure that the operation takes the same amount of time to complete regardless of the user's existence, preventing timing attacks (checking how long it takes to execute a request to infer properties something). 
+
+\paragraph{}
+We run our tests, and they pass, allowing our users to sign in.
+
 \printbibliography
 \end{document}
