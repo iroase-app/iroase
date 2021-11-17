@@ -733,5 +733,88 @@ We run our tests, and they pass, allowing our users to sign in.
 \paragraph{}
 Now that we can allow users to create accounts and exchange credentials for sessions, we need to ensure that we can verify that a session is valid. Clients should attach their session token to every auth-required request they make in the 'Authorization' header. We can do this by writing middleware that checks the token against the database.
 
+\begin{minted}[breaklines, linenos]{typescript}
+// Excerpt from ./src/api/_common/verifySession.ts
+/**
+ * Middleware to check if the user is logged in.
+ * @param req Express request object.
+ * @param res Express response object.
+ * @param next Express next callback.
+*/
+export default async function verifySession(req: Request, res: Response, next: Function) {
+  let token;
+  if (req.headers.authorization) {
+    token = req.headers.authorization?.split(' ')[1];
+  } else {
+    token = null;
+  }
+  if (!token) res.status(401).send({ error: 'noBearer' });
+  else {
+    const user = await db.query(`
+    SELECT users.user_id, username, "token", is_moderator
+    FROM users INNER JOIN sessions ON (users.user_id = sessions.user_id)
+    WHERE "token" = $1;
+  `,
+    [token]);
+
+    if (!user.rows[0]) res.status(401).send({ error: 'unauthorized' });
+    else {
+      req.user = {
+        id: user.rows[0].user_id,
+        isModerator: user.rows[0].is_moderator,
+        username: user.rows[0].username,
+      };
+      next();
+    }
+  }
+}
+\end{minted}
+\begin{minted}[breaklines]{typescript}
+app.use(verifySession);
+\end{minted}
+We then attach this middleware to routes that require authentication. Authentication protected routes are under the  '/app' path. Requests that are missing a session token or have an invalid token will be rejected, and good requests attach the user's ID, username and their role (i.e. moderator or not) to the request object for each endpoint handler to use.
+
+\paragraph{}
+We can create a meta endpoint that returns the user's username and role if they attach their session token. This can also serve as a test for our session-verification middleware.
+\begin{minted}[breaklines]{typescript}
+  // Excerpt from ./src/__test__/session/get.test.ts
+  describe('return meta information about the user', () => {
+    it('should return the user meta information', async () => {
+      const res = await supertest(loader)
+        .get('/app/session')
+        .set('Authorization', 'Bearer testToken');
+  
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({
+        username: 'TestUser',
+        isModerator: false,
+      });
+    });
+    it('should reject if session is missing or invalid', async () => {
+      let res = await supertest(loader)
+        .get('/app/session')
+        .set('Authorization', 'Bearer invalidToken');
+  
+      expect(res.status).toBe(401);
+      expect(res.body.error).toBe('unauthorized');
+  
+      res = await supertest(loader)
+        .get('/app/session')
+        .set('Authorization', 'Bearer ');
+  
+      expect(res.status).toBe(401);
+      expect(res.body.error).toBe('noBearer');
+    });
+  });
+\end{minted}
+
+The endpoint itself is trivial, as all related logic is abstracted away by the verifySession middleware.
+\begin{minted}[breaklines]{typescript}
+// Excerpt from ./src/api/app/session/get.ts
+whoami.get('/', (req, res) => {
+  res.status(200).send({ username: req.user?.username, isModerator: req.user?.isModerator });
+});
+\end{minted}
+
 \printbibliography
 \end{document}
