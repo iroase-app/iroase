@@ -769,6 +769,9 @@ export default async function verifySession(req: Request, res: Response, next: F
   }
 }
 \end{minted}
+\paragraph{}
+The lines 9-15 in the excerpt above exist to check if the request actually sends a token. When our test suite sent a request with missing credentials, and this check wasn't implemented, the server would crash!
+
 \begin{minted}[breaklines]{typescript}
 app.use(verifySession);
 \end{minted}
@@ -853,6 +856,11 @@ logout.delete('/', async (req, res) => {
   res.status(204).send();
 });
 \end{minted}
+
+
+\section{Frontend}
+\paragraph{}
+For the frontend, we're going to use SvelteKit. Svelte components are compiled to plain HTML and JavaScript, and doesn't ship any runtime. This means that our frontend app will have tiny bundle sizes, and will be able to run even on low performance devices. SvelteKit allows us to server-side render our pages, increasing perceived performance and metrics like First Contentful Paint. In addition, SvelteKit also provides routing, allowing for smooth transitions between pages without the need for a full page refresh.
 
 
 \printbibliography
