@@ -857,11 +857,46 @@ logout.delete('/', async (req, res) => {
 });
 \end{minted}
 
-
 \section{Frontend}
 \paragraph{}
 For the frontend, we're going to use SvelteKit. Svelte components are compiled to plain HTML and JavaScript, and doesn't ship any runtime. This means that our frontend app will have tiny bundle sizes, and will be able to run even on low performance devices. SvelteKit allows us to server-side render our pages, increasing perceived performance and metrics like First Contentful Paint. In addition, SvelteKit also provides routing, allowing for smooth transitions between pages without the need for a full page refresh.
 
+\paragraph{}
+We're also going to use TailwindCSS, which is an atomic CSS framework that provides many utility classes. We can set our colour scheme and fonts in the Tailwind config file.
+
+\subsection{Logo}
+\paragraph{}
+Right off the bat, we have a problem to deal with. The logo word mark is in Japanese. Normally for a word mark, we would simply download a font from a CDN. However, CJK fonts are very large as they span thousands of glyphs. This makes downloading a CJK font pretty silly for the majority of our users who will only ever need to see the logo in Japanese. We can solve this by converting the glyphs to an SVG. This cuts down the amount of data we need to send to the client significantly.
+
+\subsection{Localisation}
+\paragraph{}
+It'd be nice to have a way to localise our app. However, we need to set things up from the start to not have to deal with time-consuming refactors later.
+
+\subsubsection{RTL}
+\paragraph{}
+RTL support is needed if we are to target languages that are written from right to left, such as Arabic or Hebrew. The Tailwind plugin \href{https://github.com/20lives/tailwindcss-rtl}{tailwindcss-rtl} provides direction agnostic utilities that change the direction of the page based on the flow direction of the script.
+
+\subsubsection{Language selection}
+We can use the package \href{https://github.com/kaisermann/svelte-i18n}{svelte-i18n} to manage string dictionaries. Translations are created by updating the strings that correspond to each key in the dictionary.
+
+\subsubsection{Implementation}
+\paragraph{}
+Now, we can register locales. For now, there is just en.json, for English. We run the helper function in our site's entrypoint to register all the locales. Now, we can easily use the dictionaries in our components, like so:
+
+\begin{minted}[]{typescript}
+  {$_("landingPage.hero")}
+\end{minted}
+When the page loads, it replaces the reference with the correct string.
+
+\paragraph{}
+We can now use the i18-a11y extension for Visual Studio Code to show us previews of our translated strings in our components. If we reference a key that doesn't exist, we'll get a warning in our editor.
+
+\begin{figure}[H]
+  \includegraphics[width=\linewidth]{./media/development/frontend/localisation/no_ext.png}
+  \includegraphics[width=\linewidth]{./media/development/frontend/localisation/with_ext.png}
+  \label{fig:localisation1}
+  \caption{We get friendly previews of our strings.}
+\end{figure}
 
 \printbibliography
 \end{document}
