@@ -898,5 +898,33 @@ We can now use the i18-a11y extension for Visual Studio Code to show us previews
   \caption{We get friendly previews of our strings.}
 \end{figure}
 
+\subsubsection{Mirroring the interface}
+\paragraph{}
+While the tailwindcss-rtl library is very useful, the text-align utilities are currently broken. See \href{https://github.com/20lives/tailwindcss-rtl/issues/39}{this issue and pull request opened by me} for more info. Right now though, we can work around this by overwriting the broken utilities in our Tailwind.postcss file:
+
+\begin{minted}[]{css}
+  @tailwind base;
+  @tailwind components;
+  @tailwind utilities;
+  
+  @layer utilities {
+    .text-start {
+      text-align: start !important;
+    }
+    .text-end {
+      text-align: end !important;
+    }
+  }  
+\end{minted}
+Neat! Now our interface is correctly mirrors based on the direction of the script, as seen in the images below.\footnote{Please forgive the machine translated Arabic.}
+\begin{figure}[H]
+  \centering
+  \subfloat{\includegraphics[height=5cm]{./media/development/frontend/localisation/ltr.png}}
+  \subfloat{\includegraphics[height=5cm]{./media/development/frontend/localisation/rtl.png}}
+  \label{fig:localisation2}
+  \caption{The interface is mirrored if a language that uses an RTL script is used.}
+\end{figure}
+
+
 \printbibliography
 \end{document}
