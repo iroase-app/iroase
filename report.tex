@@ -927,8 +927,7 @@ Neat! Now our interface is correctly mirrors based on the direction of the scrip
 
 \subsection{Register}
 \paragraph{}
-We can now create our register page.
-
+We can now create our register page. Using checks like the ones below, we can validate the user's input in real time.
 \begin{minted}[linenos, breaklines]{js}
 {#if !username.match(/^[A-Za-z0-9]*$/g)}
   <div
@@ -942,7 +941,9 @@ We can now create our register page.
   </div>
 {/if}
 \end{minted}
+This video shows our validation in action:
 
+\href{https://github.com/iroase-app/iroase/blob/main/media/ui/register/validation.mp4?raw=true}{https://github.com/iroase-app/iroase/blob/main/media/ui/register/validation.mp4?raw=true}
 
 \printbibliography
 \end{document}
