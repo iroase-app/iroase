@@ -925,6 +925,24 @@ Neat! Now our interface is correctly mirrors based on the direction of the scrip
   \caption{The interface is mirrored if a language that uses an RTL script is used.}
 \end{figure}
 
+\subsection{Register}
+\paragraph{}
+We can now create our register page.
+
+\begin{minted}[linenos, breaklines]{js}
+{#if !username.match(/^[A-Za-z0-9]*$/g)}
+  <div
+    class="flex items-center"
+    transition:fly={{ duration: 300, y: 50 }}
+  >
+    <MdiWarning class="h-5 w-5 me-2" />
+    <span class="font-sans">
+      {$_("register.constraints.username.characters")} 
+    </span>
+  </div>
+{/if}
+\end{minted}
+
 
 \printbibliography
 \end{document}
