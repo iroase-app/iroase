@@ -927,7 +927,7 @@ Neat! Now our interface is correctly mirrors based on the direction of the scrip
 
 \subsection{Register}
 \paragraph{}
-We can now create our register page. Using checks like the ones below, we can validate the user's input in real time.
+We can now create our register page. Using checks like the ones below, we can validate the user's input in real time. For the bad password list, we are using \href{https://github.com/danielmiessler/SecLists/blob/master/Passwords/Common-Credentials/10-million-password-list-top-1000.txt}{a public list of the 1,000 worst passwords.}\footnote{Be careful, the list contains offensive language and slurs.}
 \begin{minted}[linenos, breaklines]{js}
 {#if !username.match(/^[A-Za-z0-9]*$/g)}
   <div
@@ -945,5 +945,36 @@ This video shows our validation in action:
 
 \href{https://github.com/iroase-app/iroase/blob/main/media/ui/register/validation.mp4?raw=true}{https://github.com/iroase-app/iroase/blob/main/media/ui/register/validation.mp4?raw=true}
 
+\subsubsection{Sending the request}
+\paragraph{}
+Once the input has been validated, we can send the request to the server. First, we'll make a helper function to join the path with the location of the API server. This prevents hard-coding the location of our API server in many places across our codebase.
+
+\begin{minted}[breaklines, linenos]{typescript}
+ export default function getURL(...path: string[]): string {
+  return [config.api.url, ...path].join('/');
+}
+\end{minted}
+Of course, this function is also tested.
+\begin{minted}[breaklines, linenos]{typescript}
+describe("getURL", () => {
+  it("should return the correct url", () => {
+    let url = getURL("register", "foobar", "app", "123");
+    expect(url).toEqual(`${config.api.url}/register/foobar/app/123`);
+    url = getURL("hello", "world");
+    expect(url).toEqual(`${config.api.url}/hello/world`);
+  });
+  it("should return the root if no args are specified", () => {
+    const url = getURL();
+    expect(url).toEqual(`${config.api.url}`);
+  })
+  }
+);
+\end{minted}
+\begin{figure}[H]
+  \centering
+  \includegraphics[height=8cm]{./media/development/frontend/tests/unit/getURL.png}
+  \label{fig:getURL1}
+  \caption{...and our tests pass.}
+\end{figure}
 \printbibliography
 \end{document}
