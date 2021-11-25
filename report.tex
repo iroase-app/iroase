@@ -858,6 +858,11 @@ logout.delete('/', async (req, res) => {
 \end{minted}
 
 \section{Frontend}
+
+\paragraph{}
+The frontend repository contains translations that were \emph{NOT} created by me. These translations are simply .json files inside src/locales. The english translation is my own; all others have been sent by other users. You can see the pull requests for
+\href{https://github.com/iroase-app/frontend/pulls?q=is%3Apr+label%3Alocalization+}{these translations here}.
+
 \paragraph{}
 For the frontend, we're going to use SvelteKit. Svelte components are compiled to plain HTML and JavaScript, and doesn't ship any runtime. This means that our frontend app will have tiny bundle sizes, and will be able to run even on low performance devices. SvelteKit allows us to server-side render our pages, increasing perceived performance and metrics like First Contentful Paint. In addition, SvelteKit also provides routing, allowing for smooth transitions between pages without the need for a full page refresh.
 
