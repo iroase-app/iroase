@@ -1059,5 +1059,210 @@ describe("getURL", () => {
 
 The video above shows the page in action, from validating the user input to sending the request, handling errors, and storing the token that has been sent. If the user is already logged in, we redirect them to the main app page. If the user tries to access the main app page while not logged in, we redirect them to the login page.
 
+\subsection{Logging in}
+\paragraph{}
+Logging in works similarly to above. We just exchange the entered username and password for a token. See this video:
+\href{https://raw.githubusercontent.com/iroase-app/iroase/main/media/ui/login/signin.mp4}{https://raw.githubusercontent.com/iroase-app/iroase/main/media/ui/login/signin.mp4}
+
+\begin{minted}[breaklines, linenos]{typescript}
+  let username = "";
+  let password = "";
+  let fetching = false;
+  let error: false | string = false;
+
+  const submit = () => {
+    if (fetching === true) {
+      return;
+    }
+    fetching = true;
+    fetch(getURL("login"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username,
+        password,
+      }),
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        if (res.error) {
+          error = res.error;
+          fetching = false;
+        } else {
+          localStorage.setItem("session", res.session);
+          window.location.href = "/app";
+        }
+      });
+  };
+  if (browser && "session" in localStorage) {
+    onMount(() => {
+      window.location.href = "/app";
+    });
+  }
+</script>
+
+<svelte:head>
+  <title>{$_("login.page")}</title>
+</svelte:head>
+
+<svelte:window
+  on:keyup={(e) => {
+    if (e.key === "Enter") submit();
+  }}
+/>
+<div class="flex items-center justify-center w-full">
+  <main class="bg-purple p-4 text-pink rounded-md max-w-sm w-full">
+    <h2 class="font-display text-2xl mb-4">{$_("login.title")}</h2>
+    <Input
+      label={$_("login.username")}
+      id="username"
+      bind:value={username}
+      type="text"
+    />
+    <Input
+      label={$_("login.password")}
+      id="password"
+      bind:value={password}
+      type="password"
+    />
+    <button
+      class="border-2 mt-6 w-full flex items-center text-pink rounded p-2 font-display transition-opacity
+    {username && password && !fetching
+        ? 'cursor-pointer hover:bg-purple-lighter'
+        : 'cursor-not-allowed opacity-10 bg-purple-lighter'}"
+      on:click={submit}
+    >
+      {#if fetching}
+        <MdiLoading class="animate-spin" />
+      {:else}
+        <MdiAccountArrowRight class="reverse" />
+      {/if}
+      <span class="ms-2">{$_("login.submit")}</span>
+    </button>
+    {#if error}
+      <div
+        class="flex items-center mt-4"
+        transition:fly={{ duration: 300, y: 50 }}
+      >
+        <MdiWarning class="h-5 w-5 me-2" />
+        <div class="justify-between">
+          <span class="font-sans">{$_(`login.error.${error}`)}</span>
+        </div>
+      </div>
+    {/if}
+
+    <a
+      class="block ms-2 mt-6 underline font-sans cursor-pointer "
+      href="/app/register"
+    >
+      {$_("login.register")}
+    </a>
+  </main>
+</div>
+\end{minted}
+
+\subsection{Handling sessions}
+\paragraph{}
+If the user is not logged in and attempts to access the app pages, we redirect them to the login page.
+
+\begin{minted}[breaklines, linenos]{typescript}
+  onMount(async () => {
+    if (
+      !("session" in localStorage) &&
+      browser &&
+      location.pathname !== "/app/login" &&
+      location.pathname !== "/app/register"
+    ) {
+      location.pathname = "/app/login";
+    }
+    // ...
+  });
+\end{minted}
+
+If there is a session in localStorage, we make a request to the server to get more information about the user (i.e. their username and if they are a moderator). This also doubles as a check for if the session is invalid or expired.
+
+\begin{minted}[breaklines, linenos]{typescript}
+if ("session" in localStorage) {
+      $user.session = localStorage.getItem("session");
+      await fetch(getURL("app", "session"), {
+        headers: { Authorization: `Bearer ${$user.session}` },
+      })
+        .then((res) => {
+          // If the session is bad, remove it and redirect to the login page.
+          if (res.status === 401) {
+            localStorage.removeItem("session");
+            $user = null;
+            location.pathname = "/app/login";
+          } else {
+            return res.json();
+          }
+        })
+        .then((res) => {
+          $user.username = res.username;
+          $user.isModerator = res.isModerator;
+        });
+    }
+\end{minted}
+
+See this video for a demonstration:
+
+\href{https://raw.githubusercontent.com/iroase-app/iroase/main/media/ui/session/bad.mp4}{https://raw.githubusercontent.com/iroase-app/iroase/main/media/ui/session/bad.mp4}
+
+\subsection{Logging out}
+
+If the user is signed in, we show them their account tray.
+
+\begin{minted}{typescript}
+{#if $user.session}
+  <AccountTray />
+{/if}
+\end{minted}
+The AccountTray component is below. We'll deal with the settings button later.
+\begin{minted}[breaklines, linenos]{typescript}
+<div class="relative">
+  <button on:click={() => (expanded = !expanded)}>
+    <MdiAccountCircle class="h-8 w-8 m-2 cursor-pointer" />
+  </button>
+  {#if expanded}
+    <div
+      class="absolute flex flex-col z-50 border-t-2"
+      transition:fly={{ y: -10, duration: 100 }}
+    >
+      <button on:click={() => {}} transition:fly={{ y: -60, duration: 150 }}>
+        <Settings class="h-8 w-8 m-2 cursor-pointer" />
+      </button>
+      <button
+        on:click={() => {
+          fetch(getURL("app", "session"), {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${$user.session}` },
+          })
+            .then((res) => {
+              if (res.ok) {
+                $user = null;
+                localStorage.removeItem("session");
+                location.pathname = "/app/login";
+              } else {
+                alert('Uh, something went wrong. Try again?')
+              }
+            }).catch((e) => {
+              console.log(e)
+            })
+        }}
+        transition:fly={{ y: -80, duration: 160, delay: 30 }}
+      >
+        <Logout class="h-8 w-8 m-2 cursor-pointer" />
+      </button>
+    </div>
+  {/if}
+</div>
+\end{minted}
+
+There's a nice little animation for the tray, too.
+
+\href{https://raw.githubusercontent.com/iroase-app/iroase/main/media/ui/usertray/usertray.mp4}{https://raw.githubusercontent.com/iroase-app/iroase/main/media/ui/usertray/usertray.mp4}
+
 \printbibliography
 \end{document}
