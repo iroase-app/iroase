@@ -521,7 +521,7 @@ We can use Google's Lighthouse to identify potential accessibility and performan
 
 \chapter{Backend}
 \paragraph{}
-To keep things clean, only the minimum to demonstrate the "idea" of the code is shown in this document. The source code for this project can be viewed \href{https://github.com/iroase-app}{on GitHub, inside the orginsation "iroase-app"} under the BSD-3-Clause license.
+To keep things clean, only the minimum to demonstrate the "idea" of the code is shown in this document. The source code for this project can be viewed \href{https://github.com/iroase-app}{on GitHub, inside the orginsation "iroase-app"} under the BSD-3-Clause licence.
 
 \paragraph{}
 Our stack for the backend is TypeScript, running inside Node, which stores data in a PostgreSQL database. An agile, test-driven development approach is used, with our tests written using \href{https://jestjs.io}{Jest}.
@@ -1007,6 +1007,8 @@ Neat! Now our interface is correctly mirrors based on the direction of the scrip
   \caption{The interface is mirrored if a language that uses an RTL script is used.}
 \end{figure}
 
+\section{Authentication}
+
 \subsection{Register}
 \paragraph{}
 We can now create our register page. Using checks like the ones below, we can validate the user's input in real time. For the bad password list, we are using \href{https://github.com/danielmiessler/SecLists/blob/master/Passwords/Common-Credentials/10-million-password-list-top-1000.txt}{a public list of the 1,000 worst passwords.}\footnote{Be careful, the list contains offensive language and slurs.}
@@ -1263,6 +1265,10 @@ The AccountTray component is below. We'll deal with the settings button later.
 There's a nice little animation for the tray, too.
 
 \href{https://raw.githubusercontent.com/iroase-app/iroase/main/media/ui/usertray/usertray.mp4}{https://raw.githubusercontent.com/iroase-app/iroase/main/media/ui/usertray/usertray.mp4}
+
+\section{Homepage}
+
+\subsection{Deck list}
 
 \printbibliography
 \end{document}
