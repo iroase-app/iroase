@@ -1,0 +1,10 @@
+json
+SvelteKit
+TailwindCSS
+browserslistrc
+Contentful
+Vite
+autoprefixer
+entrypoint
+tailwindcss-rtl
+AccountTray

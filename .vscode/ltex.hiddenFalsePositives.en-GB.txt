@@ -1,0 +1,4 @@
+{"rule":"DOUBLE_PUNCTUATION","sentence":"^\\QThe following SQL commands set up our user and session tables in PostgreSQL as according to our schema..\\E$"}
+{"rule":"UPPERCASE_SENTENCE_START","sentence":"^\\Q\"supertest\" is a library that makes it easy to emulate a request to an Express web server.\\E$"}
+{"rule":"MORFOLOGIK_RULE_EN_GB","sentence":"^\\QThe endpoint itself is trivial, as all related logic is abstracted away by the verifySession middleware.\\E$"}
+{"rule":"UPPERCASE_SENTENCE_START","sentence":"^\\Qcreated by me.\\E$"}
