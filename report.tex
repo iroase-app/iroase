@@ -1267,8 +1267,21 @@ There's a nice little animation for the tray, too.
 \href{https://raw.githubusercontent.com/iroase-app/iroase/main/media/ui/usertray/usertray.mp4}{https://raw.githubusercontent.com/iroase-app/iroase/main/media/ui/usertray/usertray.mp4}
 
 \section{Homepage}
-
+% TODO
 \subsection{Deck list}
+
+\chapter{Migration and refactor}
+\paragraph{}
+It's been a while since this project has been worked on, and a few major changes have happened in SvelteKit and Tailwind that allow us to refactor and change a few things to make more sense.  We'll make a new branch to work on this.
+
+\section{SvelteKit}
+The project structure and compiler have changed significantly, so the simplest solution is to just create a new project and manually copy over, fixing any changes. There's nothing interesting here aside from some structure, config, tooling, and name changes, so I'll skip over it here.
+
+\section{Switch from localStorage to cookies}
+Using localStorage for sessions was mostly just a workaround for having a completely static frontend, and results in a lot of duplicated code. We can switch from localStorage session keys to cookies, which needs a few changes to the backend and frontend.
+
+
+% TODO Tailwind RTL gone
 
 \printbibliography
 \end{document}

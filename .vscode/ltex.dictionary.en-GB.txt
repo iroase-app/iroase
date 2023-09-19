@@ -8,3 +8,4 @@ autoprefixer
 entrypoint
 tailwindcss-rtl
 AccountTray
+localStorage
