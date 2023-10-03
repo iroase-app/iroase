@@ -1278,7 +1278,61 @@ It's been a while since this project has been worked on, and a few major changes
 The project structure and compiler have changed significantly, so the simplest solution is to just create a new project and manually copy over, fixing any changes. There's nothing interesting here aside from some structure, config, tooling, and name changes, so I'll skip over it here.
 
 \section{Switch from localStorage to cookies}
-Using localStorage for sessions was mostly just a workaround for having a completely static frontend, and results in a lot of duplicated code. We can switch from localStorage session keys to cookies, which needs a few changes to the backend and frontend.
+Using localStorage for sessions was mostly just a workaround for having a completely static frontend, and lacking fetch hooks in older versions of SvelteKit; resulting in a lot of duplicated code. We can switch from localStorage session keys to cookies, which needs a few changes to the backend and frontend.
+
+\paragraph{}
+Because we already have tests in place, we can modify  them slightly to check for the presence of a cookie rather than an authorization header.
+
+\begin{minted}[breaklines, linenos]{typescript}
+it('should return 200 and a session token if username and password combo is correct ', async () => {
+    const res = await supertest.agent(loader).post('/login').send({ username: 'Test', password: 'very secure password' });
+    expect(res.status).toBe(200);
+    expect(res.headers).toHaveProperty('set-cookie');
+    expect(res.headers['set-cookie'][0]).toMatch(/session=[a-f0-9]{128}; Path=\/; Secure; SameSite=Strict/);
+  });
+\end{minted}
+
+We do a similar thing for all the other tests.
+
+\paragraph{}
+Now, all that needs to be changed to get it working on the server is the authentication middleware.
+
+\begin{minted}[breaklines, linenos]{typescript}
+export default async function verifySession(req: Request, res: Response, next: Function) {
+  let token;
+  if (req.cookies.session) {
+    token = req.cookies.session;
+  } else {
+    token = null;
+  }
+  if (!token) res.status(401).send({ error: 'noSession' });
+  else {
+    const user = await db.query(/* sql */ `
+    SELECT users.user_id, username, "token", is_moderator
+    FROM users INNER JOIN sessions ON (users.user_id = sessions.user_id)
+    WHERE "token" = $1;
+  `,
+    [token]);
+
+    if (!user.rows[0]) res.status(401).send({ error: 'unauthorized' });
+    else {
+      req.user = {
+        id: user.rows[0].user_id,
+        isModerator: user.rows[0].is_moderator,
+        username: user.rows[0].username,
+      };
+      next();
+    }
+  }
+}
+\end{minted}
+
+\begin{figure}[H]
+  \includegraphics[width=\linewidth]{./media/development/backend/tests/cookie-refactor.png}
+  \label{fig:tests3}
+  \width{\linewidth}
+  \caption{Our tests show that everything continues to work, just using cookies now instead of auth headers.}
+\end{figure}
 
 
 % TODO Tailwind RTL gone
