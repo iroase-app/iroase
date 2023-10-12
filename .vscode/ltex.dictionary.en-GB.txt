@@ -9,3 +9,4 @@ entrypoint
 tailwindcss-rtl
 AccountTray
 localStorage
+WCAG
