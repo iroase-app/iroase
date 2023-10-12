@@ -168,14 +168,9 @@ Being able to target individual users allows for personalised learning. This mea
   \begin{itemize}
     \item Take username and password.
     \item Password must be typed twice to prevent mistakes, and be masked to prevent shoulder surfing.
-    \item Prevent automated registration attempts, such as through a captcha.
     \item Optionally allow the user to use 2FA.
   \end{itemize}
-  \item Must have a sign-in page:
-  \begin{itemize}
-    \item Sign in must be rate-limited to prevent automated attempts.
-    \item Sign in must be protected by captcha to prevent automated attempts.
-  \end{itemize}
+  \item Must have a sign-in page.
 \end{itemize}
 
 \subsection{Feel and branding}
@@ -425,35 +420,13 @@ $\frac{2}{3} \leq c < 1$ is a high confidence card, so we serve a challenge that
 \paragraph{}
 Using these thresholds, we can have a variety of challenge types that scale to the user's ability.
 
-\subsection{Captcha}
-\paragraph{}
-In order to protect against bots, we can require access to certain API endpoints (e.g. registration, sign in, reporting items) require a captcha to be solved. However, traditional captchas result in poor UX and are difficult to solve for able-bodied, able-minded users (let alone those with disabilities), yet are becoming quite easy to solve for advanced bots.
-
-\paragraph{}
-We can use an invisible, proof-of-work captcha to solve this problem. Proof of work challenges don't aim to separate bots from humans but instead exist to increase the amount of computational effort it takes to submit a request to the point where it is not worth sending automated requests.
-
-\paragraph{}
-Similar to proof of work algorithms used by some cryptocurrencies, we can send a challenge that requires the client machine to brute-force a hash with a desired property, such as a certain amount of leading zeros in the binary digest of the hash.
-
-\paragraph{}
-Implementations of this kind of challenge already exist and are being used somewhat commonly on the internet. The most prolific example is \href{https://friendlycaptcha.com/}{FriendlyCaptcha}.
-
-\paragraph{}
-We can generate a challenge (such as a random string) on the server and send it to the client. The client would then use a hashing algorithm to repeatedly hash the challenge prepended with its own generated string until it finds a hash that meets the desired property, e.g. starting with 10 zeros. The client then sends the generated string that resulted in the passing hash to the server alongside its request to whatever endpoint the client is trying to access. The server verifies if the solution is correct: if it is, the server services the request.
-
-\paragraph{}
-The benefits to this approach are significant compared to a traditional text transcription or image labelling task like Google's reCAPTCHA. For one, reCAPTCHA is very expensive at 1 USD per 1,000 requests. In addition, Google uses reCAPTCHA to track users across the internet, so there are privacy implications for using reCAPTCHA. Further, reCAPTCHA has already been broken with \href{https://2captcha.com/}{services that exist allowing you to pay for a human to solve the challenge for you}. The greatest upside, however, is the complete elimination of friction from legitimate users.
-
-\subsection{Authentication}
-Log in and sign up needs to be protected by a captcha.
-
 \subsubsection{Sign up}
 \paragraph{}
 On sign up, users are asked to send a username they want alongside their password to the server. First, it must check that the username is valid (alphanumeric and within a certain length constraint). If it is valid, the server then checks the database to see if the username is already taken. If it isn't taken, we hash their password with a salt, create a new entry in the Users table with their username, hashed password, salt, the current time. We create a session token and then send the token to the client. If the username is invalid or has already been taken, we send an error back to the client.
 
 \subsubsection{Login}
 \paragraph{}
-On sign up, users enter their username and password. This is sent to the server, which retrieves the hash and salt from the database. We hash the password with the salt and then compare the hash to the stored hash. If they match, the password is correct and we can create a session to send to the client. If either the username or the password is incorrect, we send an error to the client stating that the username or password is incorrect.
+On sign up, users enter their username and password. This is sent to the server, which retrieves the hash and salt from the database. We hash the password with the salt and then compare the hash to the stored hash. If they match, the password is correct, and we can create a session to send to the client. If either the username or the password is incorrect, we send an error to the client stating that the username or password is incorrect.
 
 \subsection{Sessions}
 Session tokens are symmetrical on the client and the server. The session token should be sent in Authorization header on almost every request. If the token is invalid or missing, we return a 401 Unauthorized.
