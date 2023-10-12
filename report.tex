@@ -12,6 +12,7 @@
 \usepackage{array,ragged2e,pst-node,pst-dbicons}
 \usepackage{mdframed}
 \usepackage{minted}
+
 \usemintedstyle{monokai}
 \BeforeBeginEnvironment{minted}{\begin{mdframed}[backgroundcolor=black!90]}
 \AfterEndEnvironment{minted}{\end{mdframed}}
@@ -1266,9 +1267,6 @@ There's a nice little animation for the tray, too.
 
 \href{https://raw.githubusercontent.com/iroase-app/iroase/main/media/ui/usertray/usertray.mp4}{https://raw.githubusercontent.com/iroase-app/iroase/main/media/ui/usertray/usertray.mp4}
 
-\section{Homepage}
-% TODO
-\subsection{Deck list}
 
 \chapter{Migration and refactor}
 \paragraph{}
@@ -1276,14 +1274,6 @@ It's been a while since this project has been worked on, and a few major changes
 
 \section{SvelteKit}
 The project structure and compiler have changed significantly, so the simplest solution is to just create a new project and manually copy over, fixing any changes. There's nothing interesting here aside from some structure, config, tooling, and name changes, so I'll skip over it here.
-
-\subsection{Use server-side rendering}
-% TODO
-
-\subsection{Form validation}
-% TODO
-
-% TODO: request diagram flow between SK/Browser/API
 
 \section{Switch from localStorage to cookies}
 Using localStorage for sessions was mostly just a workaround for having a completely static frontend, and lacking fetch hooks in older versions of SvelteKit; resulting in a lot of duplicated code. We can switch from localStorage session keys to cookies, which needs a few changes to the backend and frontend.
@@ -1341,9 +1331,176 @@ export default async function verifySession(req: Request, res: Response, next: F
   \caption{Our tests show that everything continues to work, just using cookies now instead of auth headers.}
 \end{figure}
 
+\subsection{Move to HTML forms}
+Finally, for the frontend, we change from using fetch() to a normal form. We can still use JavaScript validation.
+
+The login page and register page are very similar, so here are some interesting snippets for the sign-up page, with repititive or visual only things removed.
+
+\begin{minted}[breaklines, linenos]{typescript}
+
+  export let form: ActionData;
+
+  let username = form?.username || "";
+  let password = "";
+  let confirm = "";
+  let error: false | string = form?.error || false;
+
+  $: formIsValid = !(
+    password !== confirm ||
+    password.length < 8 ||
+    password.length > 128 ||
+    username.length < 3 ||
+    username.length > 24 ||
+    !username.toString().match(/^[A-Za-z0-9]*$/g)
+  );
+
+// snip
+<form method="POST">
+  <div>
+    <label>
+      {$_("register.username")}
+      <input name="username" bind:value={username} type="text" />
+    </label>
+    <div>
+      {#if (username.length < 3 || username.length > 24) && username.length > 0}
+        <div
+          class="flex items-center"
+          transition:fly={{ duration: 300, y: 50 }}
+        >
+          <MdiWarning class="h-5 w-5 me-2" />
+          <div class="justify-between">
+            <span class="font-sans"
+              >{$_("register.constraints.username.length")}</span
+            >
+            <span class="font-sans">({username.length})</span>
+          </div>
+        </div>
+      {/if}
+      {#if !username.toString().match(/^[A-Za-z0-9]*$/g)}
+        <div
+          class="flex items-center"
+          transition:fly={{ duration: 300, y: 50 }}
+        >
+          <MdiWarning class="h-5 w-5 me-2" />
+          <span class="font-sans"
+            >{$_("register.constraints.username.characters")}</span
+          >
+        </div>
+      {/if}
+    </div>
+  </div>
+  // snip
+      {#if error}
+        <div
+          class="flex items-center"
+          transition:fly={{ duration: 300, y: 50 }}
+        >
+          <MdiError class="h-5 w-5 me-2" />
+          <div class="justify-between">
+            <span class="font-sans font-bold"
+              >{$_(`register.error.${error}`)}</span
+            >
+          </div>
+        </div>
+      {/if}
+      <button
+        disabled={!formIsValid}
+        aria-disabled={!formIsValid}
+        class="border-2 mt-6 w-full flex items-center text-pink rounded p-2 font-display transition-opacity
+          {formIsValid
+          ? 'cursor-pointer hover:bg-purple-lighter'
+          : 'cursor-not-allowed opacity-10 bg-purple-lighter'}"
+      >
+        <MdiAccountPlus class="reverse" />
+        <span class="ms-2">{$_("register.submit")}</span>
+      </button>
+
+      <a
+        class="block ms-2 mt-6 underline font-sans cursor-pointer"
+        href="/app/auth/login"
+      >
+        {$_("register.login")}
+      </a>
+    </div>
+  </div>
+</form>
+\end{minted}
+
+This provides specific feedback next to each field while typing, and disables the submit button if the data is invalid.
+
+\section{Server side rendering and proxying credentials}
+
+Of course, sending the form just sends the data back to our frontend server. We actually need to forward it to our API.
+First, we check again that the data sent is actually valid. (Our API also checks this, but this helps with latency as fewer round trips are needed to find out that the data is invalid.)
+
+A frontend server action handles the form, and sends it to the API server. But because the API server thinks the frontend server is now the 'client', cookies also need to be manually proxied through.
+
+When registering we run this (similar flow is used for login):
+
+\begin{minted}[breaklines, linenos]{typescript}
+export const actions = {
+	default: async ({ cookies, request }) => {
+		const data = await request.formData();
+		const username = data.get('username');
+		const password = data.get('password');
+		const confirm = data.get('confirm');
+		if (password !== confirm) return fail(400, { username, error: "confirm" });
+		else if (!password || password.length < 8 || password.length > 128) return fail(400, { username, error: "passwordLength" });
+		else if (!username || username.length < 3 || username.length > 24) return fail(400, { username, error: "usernameLength" });
+		else if (!username.toString().match(/^[A-Za-z0-9]*$/g)) return fail(400, { username, error: "usernameCharachters" });
+		else {
+			const res = await fetch(getURL('register'), {
+				method: 'POST',
+				credentials: 'include',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ username, password })
+			})
+			const apiResponse = await res.json();
+			console.log(apiResponse)
+			if (res.status === 201) {
+				// forward cookie to client
+				cookies.set("session",
+					res.headers.getSetCookie()[0].split(';')[0].split('=')[1],
+					{ path: '/', maxAge: 60 * 60 * 24 * 7, sameSite: 'lax', secure: true, httpOnly: true }
+				)
+				return "success";
+			}
+			else if (res.status === 409) {
+				return fail(409, { username, error: "usernameCollision" })
+			} else if (res.status === 400) {
+				return fail(400, { username, error: apiResponse });
+			} else {
+				return fail(500, { username, error: "internalError" });
+			}
+		}
+	}
+} satisfies Actions;
+\end{minted}
+
+Now, we can check that the user is logged in by sending a request to "/app/session" on our API server. If they are not, we redirect them back to the login page.
+
+\begin{minted}[linenos,breaklines]{typescript}
+export const load: LayoutLoad = async ({ fetch, url }) => {
+	const res = await fetch(getURL("app", "session"), { credentials: 'include' });
+	if (res.status === 200) {
+		if (url.pathname.startsWith("/app/auth")) {
+			throw redirect(302, "/app");
+		}
+		const user = await res.json() as unknown as User;
+		return { user };
+	} else if (!url.pathname.startsWith("/app/auth")) {
+		throw redirect(307, "/app/auth/login");
+	}
+}
+\end{minted}
+
+\subsection{Universal load functions}
+This snippet is run universally. On initial navigation, this code runs on the frontend server, forwarding any cookies through to the API. Thereafter, the browser runs this code, \emph{calling the API server directly.} This ensures that when first opening our app, the user gets the relevant content immediately, as well as reducing latency for subsequent requests.
+
 
 % TODO Tailwind RTL gone
-
 
 \printbibliography
 \end{document}
