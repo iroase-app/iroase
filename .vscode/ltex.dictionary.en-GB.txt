@@ -10,3 +10,4 @@ tailwindcss-rtl
 AccountTray
 localStorage
 WCAG
+Leitner
