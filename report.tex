@@ -1473,8 +1473,251 @@ export const load: LayoutLoad = async ({ fetch, url }) => {
 This snippet is run universally. On initial navigation, this code runs on the frontend server, forwarding any cookies through to the API. Thereafter, the browser runs this code, \emph{calling the API server directly.} This ensures that when first opening our app, the user gets the relevant content immediately, as well as reducing latency for subsequent requests.
 
 \chapter{Implementation, continued}
-% TODO Tailwind RTL gone
+\section{Creating, editing, deleting cards in a deck}
+
+The code for the above is largely similar; check which deck you are trying to edit, see if it is your deck, and then allow you to make changes. Below is just the code for adding to a deck.
+
+\begin{minted}[breaklines,linenos]{typescript}
+  // Create a new card in a deck.
+create.post('/:id', async (req, res) => {
+  if (!req.params.id.match(/^[0-9]+$/)) {
+    res.status(400).send({ error: 'invalidId' });
+    return;
+  }
+  if (!req.body.front || !req.body.back) {
+    res.status(400).send({ error: 'missingField' });
+    return;
+  }
+  if (req.body.front.length > 1000 || req.body.back.length > 1000) {
+    res.status(400).send({ error: 'fieldTooLong' });
+    return;
+  }
+  if (req.body.front.length < 1 || req.body.back.length < 1) {
+    res.status(400).send({ error: 'fieldTooShort' });
+    return;
+  }
+  // Can the user access this deck, or does it even exist?
+  const deck = await db.query(/* sql */ `
+    SELECT * FROM user_decks WHERE deck_id = $1 AND user_id = $2;
+    `, [req.params.id, req.user!.id]);
+  if (!deck.rows[0]) {
+    res.status(404).send({ error: 'deckNotFound' });
+    return;
+  }
+
+  // Create the card.
+  const card = await db.query(/* sql */ `
+    INSERT INTO cards ("front", "back", "deck_id")
+    VALUES ($1, $2, $3)
+    RETURNING card_id;
+    `, [req.body.front, req.body.back, req.params.id]);
+  res.status(201).send({ card_id: card.rows[0].card_id });
+});
+\end{minted}
+
+And here's the test for it too:
+\begin{minted}[breaklines,linenos]{typescript}
+import { QueryResult } from 'pg';
+import supertest from 'supertest';
+import db from '../../../db';
+import loader from '../../../loader';
+import setupAuth from '../../setupAuth';
+
+const decks: QueryResult[] = [];
+const notOurDecks: QueryResult[] = [];
+let token: string;
+beforeEach(async () => {
+  token = await setupAuth();
+  decks[0] = await db.query(/* sql */ `
+    INSERT INTO decks ("name", "public", "course")
+    VALUES ($1, $2, $3)
+    RETURNING deck_id;`,
+  ['foobar', false, null]);
+
+  decks[1] = await db.query(/* sql */ `
+    INSERT INTO decks ("name", "public", "course")
+    VALUES ($1, $2, $3)
+    RETURNING deck_id;`,
+  ['foobar2', false, null]);
+
+  notOurDecks[0] = await db.query(/* sql */ `
+    INSERT INTO decks ("name", "public", "course")
+    VALUES ($1, $2, $3)
+    RETURNING deck_id;`,
+  ['notOurs', false, null]);
+
+  await db.query(/* sql */ `
+    INSERT INTO "user_decks" ("user_id", "deck_id")
+    VALUES 
+      (1, $1);`, // Our test user has an ID of 1.
+  [decks[0].rows[0].deck_id]);
+
+  await db.query(/* sql */ `
+    INSERT INTO "user_decks" ("user_id", "deck_id")
+    VALUES (999, $1);`, // This deck does not belong to our test user.
+  [decks[1].rows[0].deck_id]);
+});
+
+afterAll(async () => {
+  await db.end();
+});
+
+describe('adding a card to a deck', () => {
+  it('should allow you to add a card to a deck that belongs to you', async () => {
+    // send a POST request to /app/deck/:deck_id to add a card to this deck.
+    const res = await supertest(loader).post(`/app/deck/${decks[0].rows[0].deck_id}`).send({
+      front: 'front',
+      back: 'back',
+    }).set('Cookie', [`session=${token}`]);
+    expect(res.body).toHaveProperty('card_id');
+    expect(res.status).toBe(201);
+
+    // check that the card was added to the database.
+    const card = await db.query(/* sql */ `
+      SELECT * FROM cards WHERE card_id = $1;`,
+    [res.body.card_id]);
+    expect(card.rows[0].front).toBe('front');
+    expect(card.rows[0].back).toBe('back');
+    expect(card.rows[0].deck_id).toBe(decks[0].rows[0].deck_id);
+    expect(card.rows[0].card_id).toBe(res.body.card_id);
+  });
+
+  it('should not allow you to add a card to a deck that does not belong to you', async () => {
+    const res = await supertest(loader).post(`/app/deck/${notOurDecks[0].rows[0].deck_id}`).send({
+      front: 'front',
+      back: 'back',
+    }).set('Cookie', [`session=${token}`]);
+    expect(res.body.error).toBe('deckNotFound');
+    expect(res.status).toBe(404);
+
+    // check that the card was not added to the database.
+    const card = await db.query(/* sql */ `
+      SELECT * FROM cards WHERE deck_id = $1;`,
+    [notOurDecks[0].rows[0].deck_id]);
+    expect(card.rows).toHaveLength(0);
+  });
+
+  it('should not allow you to add a card to a deck that does not exist', async () => {
+    const res = await supertest(loader).post('/app/deck/999').send({
+      front: 'front',
+      back: 'back',
+    }).set('Cookie', [`session=${token}`]);
+    expect(res.body.error).toBe('deckNotFound');
+    expect(res.status).toBe(404);
+
+    // check that the card was not added to the database.
+    const card = await db.query(/* sql */ `
+      SELECT * FROM cards WHERE deck_id = $1;`,
+    [999]);
+    expect(card.rows).toHaveLength(0);
+  });
+
+  it('should not allow you to add a card to a deck without a front or back', async () => {
+    let res = await supertest(loader).post(`/app/deck/${decks[0].rows[0].deck_id}`).send({
+      front: 'front',
+    }).set('Cookie', [`session=${token}`]);
+    expect(res.body.error).toBe('missingField');
+    expect(res.status).toBe(400);
+
+    res = await supertest(loader).post(`/app/deck/${decks[0].rows[0].deck_id}`).send({
+      back: 'back',
+    }).set('Cookie', [`session=${token}`]);
+    expect(res.body.error).toBe('missingField');
+    expect(res.status).toBe(400);
+
+    // check that the card was not added to the database.
+    const card = await db.query(/* sql */ `
+      SELECT * FROM cards WHERE deck_id = $1;`,
+    [decks[0].rows[0].deck_id]);
+    expect(card.rows).toHaveLength(0);
+  });
+
+  it('should reject badly formatted non-numeric ids', async () => {
+    let res = await supertest(loader).post('/app/deck/999a').send({
+      front: 'front',
+      back: 'back',
+    }).set('Cookie', [`session=${token}`]);
+    expect(res.body.error).toBe('invalidId');
+    expect(res.status).toBe(400);
+
+    res = await supertest(loader).post('/app/deck/999.1').send({
+      front: 'front',
+      back: 'back',
+    }).set('Cookie', [`session=${token}`]);
+    expect(res.body.error).toBe('invalidId');
+    expect(res.status).toBe(400);
+
+    res = await supertest(loader).post('/app/deck/999/0').send({
+      front: 'front',
+      back: 'back',
+    }).set('Cookie', [`session=${token}`]);
+    expect(res.status).toBe(404);
+
+    // check that the card was not added to the database.
+    const card = await db.query(/* sql */ `
+      SELECT * FROM cards WHERE deck_id = $1;`,
+    [999]);
+    expect(card.rows).toHaveLength(0);
+  });
+});
+
+\end{minted}
+
+\chapter{Testing}
 % TODO Write about fixing the bug where it would send over everyone's decks no matter the user; commits c7ddd2ded26132bfcbfa36db7f60fe1fc0a9b9bb and e81209a338ec11e279d6ea4af6aaf86b74b46706
+Because we've been using test-driven development throughout, most of our testing is covered. However, a few things were resolved using manual testing.
+\section{Manual}
+\subsection{Users getting access to everyone's deck}
+This bug was due to not checking the user ID in the SQL query. As a result, listing the user's decks would return every single deck in the database, including decks that don't belong to the user. This has been resolved, and the test suites have been updated to check for this oversight too.
+
+\subsubsection{Updated Test}
+\begin{minted}[breaklines]{typescript}
+  beforeEach(async () => {
+  token = await setupAuth();
+
+  // Decks we want to retrieve for our user
+  ourDecks = await db.query(/* sql */ `
+    INSERT INTO decks ("name", "public", "course")
+    VALUES ($1, $2, $3)
+    RETURNING deck_id;`,
+  ['foobar', false, null]);
+
+  await db.query(/* sql */ `
+    INSERT INTO "user_decks" ("user_id", "deck_id")
+    VALUES 
+      (1, $1);`,
+  [ourDecks.rows[0].deck_id]);
+
+  // Decks for another user
+  otherDecks = await db.query(/* sql */ `
+    INSERT INTO decks ("name", "public", "course")
+    VALUES ($1, $2, $3)
+    RETURNING deck_id;`,
+  ['notOurs', false, null]);
+
+  await db.query(/* sql */ `
+    INSERT INTO "user_decks" ("user_id", "deck_id")
+    VALUES 
+      (999, $1);`,
+  [otherDecks.rows[0].deck_id]);
+});
+
+\end{minted}
+We add this line to make sure only the user's deck added should be returned for the test to pass.
+\begin{minted}[breaklines]{typescript}
+  expect(res.body.decks).toHaveLength(1); // only foobar; not someone elses deck.
+\end{minted}
+
+\subsubsection{Updated Query}
+The SQL query has been changed to resolve this:
+\begin{minted}[breaklines]{SQL}
+  SELECT "decks"."deck_id", "decks"."name", "decks"."course", "decks"."public" FROM "decks", "user_decks"
+  JOIN "users" ON "user_decks"."user_id" = "users"."user_id"
+  WHERE "user_decks"."user_id" = $1`,
+  [req.user!.id]);
+\end{minted}
+
+
 
 \printbibliography
 \end{document}
