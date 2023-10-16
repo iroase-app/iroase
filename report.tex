@@ -333,13 +333,10 @@ Now that we have a way to estimate the difficulty of a card, we can start to dec
 
 \subsubsection{Difficulty thresholds}
 \paragraph{}
-$0 \leq d < \frac{1}{3}$ is a low difficulty card, so we serve a challenge that asks them to type out the other side of the card from memory.
+$0 \leq d < \frac{1}{2}$ is a low difficulty card, so we serve a challenge that asks them to type out the other side of the card from memory.
 
 \paragraph{}
-$\frac{1}{3} \leq d < \frac{2}{3}$ is a medium difficulty card, so we serve a challenge that asks the user to pick out the other side of the card from a selection of multiple possibilities.
-
-\paragraph{}
-$\frac{2}{3} \leq d < 1$ is a high difficulty card, so we serve a "challenge" that simply asks the user to review the card and rate it. We update the confidence accordingly based on if the user finds the card easy, medium, or hard.
+$\frac{1}{2} \leq d < 1$ is a high difficulty card, so we serve a "challenge" that simply asks the user to review the card and rate it. We update the confidence accordingly based on if the user finds the card easy, medium, or hard.
 
 \paragraph{}
 Using these thresholds, we can have a variety of challenge types that scale to the user's ability.
@@ -1424,9 +1421,9 @@ export const load: LayoutLoad = async ({ fetch, url }) => {
 This snippet is run universally. On initial navigation, this code runs on the frontend server, forwarding any cookies through to the API. Thereafter, the browser runs this code, \emph{calling the API server directly.} This ensures that when first opening our app, the user gets the relevant content immediately, as well as reducing latency for subsequent requests.
 
 \chapter{Implementation, continued}
-\section{Creating, editing, deleting cards in a deck}
+\section{Creating and deleting cards in a deck}
 
-The code for the above is largely similar; check which deck you are trying to edit, see if it is your deck, and then allow you to make changes. Below is just the code for adding to a deck.
+The code for both is largely similar; check which deck you are trying to edit, see if it is your deck, and then allow you to make changes. Below is just the code for adding to a deck.
 
 \begin{minted}[breaklines,linenos]{typescript}
   // Create a new card in a deck.
@@ -1611,7 +1608,239 @@ describe('adding a card to a deck', () => {
     expect(card.rows).toHaveLength(0);
   });
 });
+\end{minted}
 
+And for the frontend, the editor looks like this:
+
+\begin{minted}[breaklines,linenos]{typescript}
+  <script lang="ts">
+    $: cards = data.cards;
+  let newFront = "";
+  let newBack = "";
+  $: newCardValid =
+    newFront.length > 0 &&
+    newBack.length > 0 &&
+    newFront !== "<br>" &&
+    newBack !== "<br>";
+
+  async function createCard(front: string, back: string): Promise<string> {
+    let res = fetch(getURL("app", "deck", data.deck.deck_id), {
+      credentials: "include",
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        front: front.replaceAll("<br>", "").trim(),
+        back: back.replaceAll("<br>", "").trim(),
+      }),
+    });
+    if (!(await res).ok) throw new Error("app.editor.createCard.error");
+    else return (await (await res).json()).card_id;
+  }
+
+  async function deleteCard(cardID: string): Promise<boolean> {
+    let res = await fetch(getURL("app", "deck", data.deck.deck_id, cardID), {
+      credentials: "include",
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        card_id: cardID,
+      }),
+    });
+    if (!(await res).ok) throw new Error("app.editor.error.deleteCard");
+    return true;
+  }
+</script>
+
+<main>
+  <h1 class="text-center font-display text-xl">
+    {$_("app.editor.editing", { values: { deckName: data.deck.name } })}
+  </h1>
+  <!-- New card -->
+  <form
+    class="flex items-center m-2"
+    on:submit|preventDefault={() => {
+      createCard(newFront, newBack).then((res) => {
+        cards = [
+          ...cards,
+          { card_id: res, front: newFront, back: newBack },
+        ];
+        newFront = "";
+        newBack = "";
+      });
+    }}
+  >
+    <div
+      contenteditable
+      bind:innerHTML={newFront}
+      role="textbox"
+      aria-multiline="true"
+      aria-label="Front of card"
+      class="rounded-lg border-dashed border-2 bg-pink placeholder-purple-lighter focus:bg-pink-darker outline-none text-purple border-purple p-6 transition-all flex items-center text-center md:m-2 w-full h-full"
+    />
+    <div
+      class="w-full max-w-md border-b-4 border-dotted h-0 flex relative justify-center"
+    >
+      <button
+        disabled={!newCardValid}
+        class="absolute min-h-min -translate-y-4 z-10 bg-pink p-1 text-purple border-2 rounded-lg focus-visible:bg-pink-darker disabled:cursor-not-allowed disabled:text-purple-lighter disabled:line-through transitiona"
+        >{$_("app.editor.create")}</button
+      >
+    </div>
+    <div
+      bind:innerHTML={newBack}
+      contenteditable
+      role="textbox"
+      aria-multiline="true"
+      aria-label="Back of card"
+      class="rounded-lg border-dashed border-2 bg-pink placeholder-purple-lighter focus:bg-pink-darker outline-none text-purple border-purple p-6 transition-all flex items-center text-center md:m-2 w-full h-full"
+    />
+  </form>
+
+  <ul>
+    {#each cards as card}
+      <li class="m-2 flex items-center">
+        <div
+          class="rounded-lg bg-purpletext-pink outline-none text-pink bg-purple p-6 transition-all flex items-center text-center md:m-2 w-full h-full"
+        >
+          {card.front}
+        </div>
+        <div
+          class="w-full max-w-md border-b-4 border-dotted h-0 flex relative justify-center"
+        >
+          <button
+            on:click={async () => {
+              if (await deleteCard(card.card_id)) {
+                cards = cards.filter((x) => {
+                  return x.card_id !== card.card_id;
+                });
+              }
+            }}
+            class="absolute min-h-min -translate-y-4 z-10 bg-pink p-1 text-purple border-2 rounded-lg focus-visible:bg-pink-darker disabled:cursor-not-allowed disabled:text-purple-lighter disabled:line-through transitiona"
+            >{$_("app.editor.delete")}</button
+          >
+        </div>
+        <div
+          class="rounded-lg bg-purpletext-pink outline-none text-pink bg-purple p-6 transition-all flex items-center text-center md:m-2 w-full h-full"
+        >
+          {card.back}
+        </div>
+      </li>
+    {/each}
+  </ul>
+</main>
+\end{minted}
+
+\section{Review}
+\paragraph{}
+During a review, the server randomly picks a due card, and sends it to the client with a suggestion for a challenge to pick. The client then sends back how the feel about the card, and the server updates the due date accordingly.
+There's not much incentive for a user to 'cheat', so we can take the client's answer at face value.
+
+\begin{minted}[breaklines,linenos]{typescript}
+view.get('/:deck', async (req, res) => {
+  const cards = await db.query(/* sql */ `
+    SELECT "front", "back", "card_id", "due", "pulled", "forgotten" FROM "user_decks"
+    JOIN "cards" ON "user_decks"."deck_id" = "cards"."deck_id"
+    WHERE "user_decks"."deck_id" = $1 AND "user_decks"."user_id" = $2
+    AND "due" <= CURRENT_TIMESTAMP;
+    `, [req.params.deck, req.user!.id]);
+  if (cards.rows.length === 0) {
+    res.status(204).send();
+    return;
+  }
+  const pulledCard = cards.rows[Math.floor(Math.random() * cards.rows.length)];
+  const difficulty = pulledCard.forgotten / (pulledCard.pulled + pulledCard.forgotten + 1);
+  // Harder challenge = smaller number.
+  let challengeType: 'easy' | 'hard' = difficulty < 0.5 ? 'hard' : 'easy';
+  if (pulledCard.pulled === 0) challengeType = 'easy';
+  res.status(200).send({
+    card: {
+      front: pulledCard.front,
+      back: pulledCard.back,
+      card_id: pulledCard.card_id,
+    },
+    challengeType,
+  });
+});
+
+review.patch('/:deck/:card/', async (req, res) => {
+  console.log(req.body);
+  if (!req.params.deck.match(/^[0-9]+$/ || !req.params.card.match(/^[0-9]+$/))) {
+    res.status(400).send({ error: 'invalidId' });
+    return;
+  }
+
+  if (!('deltaT' in req.body) || typeof req.body.deltaT !== 'number' || req.body.deltaT < 0 || !('forgotten' in req.body) || typeof req.body.forgotten !== 'boolean') {
+    res.status(400).send({ error: 'invalidBody' });
+    return;
+  }
+
+  const card = await db.query(/* sql */ `
+    SELECT "due", "pulled", "forgotten" FROM "user_decks"
+    JOIN "cards" ON "user_decks"."deck_id" = "cards"."deck_id"
+    WHERE "user_decks"."deck_id" = $1 AND "user_decks"."user_id" = $2
+    AND "due" <= CURRENT_TIMESTAMP
+    AND "card_id" = $3;
+  `, [req.params.deck, req.user!.id, req.params.card]);
+
+  if (card.rows.length === 0) {
+    res.status(404).send({ error: 'pullNotFound' });
+    return;
+  }
+
+  const q = db.query(/* sql */ `
+    UPDATE "cards"
+    SET "pulled" = "pulled" + 1,
+      "due" = CURRENT_TIMESTAMP + ($2 * INTERVAL '1 second'),
+      "forgotten" = "forgotten" + $3
+    WHERE "card_id" = $1;
+    `, [req.params.card, req.body.deltaT, req.body.forgotten ? 1 : 0])
+    .then(async () => {
+      res.status(204).send();
+      console.log(await q);
+    })
+    .catch(() => res.status(500).send({ error: 'internalError' }));
+});
+\end{minted}
+
+And for the frontend, we just call the API.
+\begin{minted}[breaklines,linenos]{typescript}
+  async function pull() {
+    let res = await fetch(getURL("app", "review", $page.params.deck), {
+      credentials: "include",
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    if (!(await res).ok) throw new Error("app.review.error.pull");
+    if ((await res).status === 204) return null;
+    return await res.json();
+  }
+
+  async function push() {
+    let res = await fetch(
+      getURL("app", "review", $page.params.deck, challenge.card.card_id),
+      {
+        credentials: "include",
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          deltaT,
+          forgotten,
+        }),
+      }
+    );
+    if (!res.ok) throw new Error("app.review.error.push");
+    if (res.status === 204) await pull();
+    location.reload();
+    return;
+  }
 \end{minted}
 
 \chapter{Testing}
@@ -1668,7 +1897,16 @@ The SQL query has been changed to resolve this:
   [req.user!.id]);
 \end{minted}
 
+\subsection{Reviewing}
+Because of the random nature of reviewing cards, writing automated tests isn't a good idea. Instead, we manually call the API through the frontend with a bunch of different inputs, and see if the responses are as we expect. Then, we can check the database to see if the information has been updated correctly.
 
+With invalid input, we get the expected error message, and with valid requests, the database is updated correctly.
+
+\begin{figure}[h!]
+  \includegraphics[width=\linewidth]{./media/testing/Screenshot_20231017_003635.png}
+  \label{fig:manual1}
+  \caption{Invalid input is rejected.}
+\end{figure}
 
 \printbibliography
 \end{document}
