@@ -1846,11 +1846,41 @@ And for the frontend, we just call the API.
 \chapter{Testing}
 % TODO Write about fixing the bug where it would send over everyone's decks no matter the user; commits c7ddd2ded26132bfcbfa36db7f60fe1fc0a9b9bb and e81209a338ec11e279d6ea4af6aaf86b74b46706
 Because we've been using test-driven development throughout, most of our testing is covered. However, a few things were resolved using manual testing.
-\section{Manual}
-\subsection{Users getting access to everyone's deck}
+
+\section{Deck fetching}
+\subsection{Users getting access to everyone's decks}
+
+\begin{tabular}{|l|p{4cm}|p{4cm}|}
+  \cline{1-3}
+  Input & Expected & Actual output \\
+  \hline \hline
+  GET /app/decks & [\{name: foobar, public: false, course: null\}] & Every deck in the database from all users. \\
+  Cookie: *session for user 1* && \\
+  \hline
+\end{tabular}
+
+\paragraph{}
 This bug was due to not checking the user ID in the SQL query. As a result, listing the user's decks would return every single deck in the database, including decks that don't belong to the user. This has been resolved, and the test suites have been updated to check for this oversight too.
 
-\subsubsection{Updated Test}
+\subsubsection{After bug fix}
+\begin{tabular}{|l|p{4cm}|p{4cm}|}
+  \cline{1-3}
+  Input & Expected & Actual output \\
+  \hline \hline
+  GET /app/decks & [\{name: foobar, public: false, course: null\}] & [\{name: foobar, public: false, course: null\}]  \\
+  Cookie: session=*valid* && \\
+  \hline \hline
+  GET /app/decks & 401 Auth needed & 401 Auth needed \\
+  No cookies && \\
+  \hline \hline
+  GET /app/decks & 401 Auth needed & 401 Auth needed \\
+  Cookie: session=*invalid* && \\
+  \hline \hline
+  GET /app/decks & 401 Auth needed & 401 Auth needed \\
+  Cookie: foo=bar && \\
+  \hline
+\end{tabular}
+
 \begin{minted}[breaklines]{typescript}
   beforeEach(async () => {
   token = await setupAuth();
@@ -1901,12 +1931,6 @@ The SQL query has been changed to resolve this:
 Because of the random nature of reviewing cards, writing automated tests isn't a good idea. Instead, we manually call the API through the frontend with a bunch of different inputs, and see if the responses are as we expect. Then, we can check the database to see if the information has been updated correctly.
 
 With invalid input, we get the expected error message, and with valid requests, the database is updated correctly.
-
-\begin{figure}[h!]
-  \includegraphics[width=\linewidth]{./media/testing/Screenshot_20231017_003635.png}
-  \label{fig:manual1}
-  \caption{Invalid input is rejected.}
-\end{figure}
 
 \printbibliography
 \end{document}
