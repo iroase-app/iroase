@@ -1923,8 +1923,7 @@ The SQL query has been changed to resolve this:
 \begin{minted}[breaklines]{SQL}
   SELECT "decks"."deck_id", "decks"."name", "decks"."course", "decks"."public" FROM "decks", "user_decks"
   JOIN "users" ON "user_decks"."user_id" = "users"."user_id"
-  WHERE "user_decks"."user_id" = $1`,
-  [req.user!.id]);
+  WHERE "user_decks"."user_id" = $1`
 \end{minted}
 
 \subsection{Reviewing}
